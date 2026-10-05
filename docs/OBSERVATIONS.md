@@ -2,40 +2,45 @@
 
 This document catalogs every verified architectural claim, code path, and core billing mechanism observed in the upstream `flexprice` repository. Every rule and claim is backed by verified source code locations.
 
+**Commit studied:** [`31421e9ff62d00a9f4cdded11d0aad5d32a22f4a`](https://github.com/flexprice/flexprice/tree/31421e9ff62d00a9f4cdded11d0aad5d32a22f4a) (Flexprice `main`, 3 Oct 2026). Every `path:line` in `docs/` refers to this commit.
+
 ---
 
 ## 1. Tech Stack, Commands & Environment Variables
 
-- **Language & Runtime**: Go version 1.24.0
+- **Language & Runtime**: Go 1.27.1
   * Evidence: `go.mod:3` [Confirmed]
-- **Web & Routing Framework**: Gin Web Framework v1.10.0
-  * Evidence: `go.mod:23` [Confirmed]
-- **Relational ORM & Schema Engine**: Ent ORM v0.14.1 with PostgreSQL driver (`github.com/lib/pq` v1.10.9)
-  * Evidence: `go.mod:33` [Confirmed], `go.mod:60` [Confirmed]
-- **OLAP Analytical Storage**: ClickHouse Go driver (`github.com/ClickHouse/clickhouse-go/v2` v2.30.0)
-  * Evidence: `go.mod:15` [Confirmed]
-- **Distributed Cache & Locking**: Redis (`github.com/redis/go-redis/v9` v9.7.0)
-  * Evidence: `go.mod:69` [Confirmed]
-- **Message Broker & Pub/Sub**: Apache Kafka using Watermill Kafka v3.0.6
-  * Evidence: `go.mod:38` [Confirmed]
-- **Orchestration & Background Workflows**: Temporal Go SDK v1.33.0
+- **Web & Routing Framework**: Gin Web Framework v1.12.0
+  * Evidence: `go.mod:26` [Confirmed]
+- **Relational ORM & Schema Engine**: Ent ORM v0.14.6 with PostgreSQL driver (`github.com/lib/pq` v1.12.3)
+  * Evidence: `go.mod:7` [Confirmed], `go.mod:34` [Confirmed]
+- **OLAP Analytical Storage**: ClickHouse Go driver (`github.com/ClickHouse/clickhouse-go/v2` v2.48.0)
+  * Evidence: `go.mod:8` [Confirmed]
+- **Distributed Cache & Locking**: Redis (`github.com/redis/go-redis/v9` v9.22.0)
   * Evidence: `go.mod:39` [Confirmed]
+- **Message Broker & Pub/Sub**: Apache Kafka via Watermill Kafka (`github.com/ThreeDotsLabs/watermill-kafka/v2` v2.5.0)
+  * Evidence: `go.mod:12` [Confirmed]
+- **Orchestration & Background Workflows**: Temporal Go SDK v1.49.0
+  * Evidence: `go.mod:68` [Confirmed]
 - **Decimal Math Library**: Shopspring Decimal v1.4.0 (arbitrary-precision fixed-point math)
-  * Evidence: `go.mod:71` [Confirmed]
+  * Evidence: `go.mod:43` [Confirmed]
 - **Local Run Commands**:
-  * Build & run server: `make run` executing `go run cmd/server/main.go`
-    * Evidence: `Makefile:61-63` [Confirmed]
-  * Run migrations: `make migrate-up` and `make clickhouse-migrate-up`
-    * Evidence: `Makefile:82-90` [Confirmed]
-  * Run docker infrastructure (Postgres, ClickHouse, Redis, Kafka): `docker-compose up -d`
-    * Evidence: `docker-compose.yml:1-125` [Confirmed]
-- **Key Environment Variable Names**:
-  * Database: `FLEXPRICE_POSTGRES_HOST`, `FLEXPRICE_POSTGRES_PORT`, `FLEXPRICE_POSTGRES_DB`, `FLEXPRICE_POSTGRES_USER`, `FLEXPRICE_POSTGRES_PASSWORD`
-  * OLAP Analytics: `FLEXPRICE_CLICKHOUSE_ADDRESS`, `FLEXPRICE_CLICKHOUSE_DATABASE`, `FLEXPRICE_CLICKHOUSE_USER`, `FLEXPRICE_CLICKHOUSE_PASSWORD`
-  * Cache: `FLEXPRICE_REDIS_ADDRESS`, `FLEXPRICE_REDIS_PASSWORD`, `FLEXPRICE_REDIS_DB`
-  * Messaging: `FLEXPRICE_KAFKA_BROKERS`, `FLEXPRICE_KAFKA_TOPIC_EVENTS`, `FLEXPRICE_KAFKA_CONSUMER_GROUP`
-  * Temporal: `FLEXPRICE_TEMPORAL_HOST`, `FLEXPRICE_TEMPORAL_NAMESPACE`
-  * Evidence: `.env.local:1-130` [Confirmed]
+  * Build & run server: `make run` (alias of `run-server`) executing `go run cmd/server/main.go`
+    * Evidence: `Makefile:65-66,93` [Confirmed]
+  * Run all-in-one locally with `.env.local` loaded: `make run-local` (`FLEXPRICE_DEPLOYMENT_MODE=local`)
+    * Evidence: `Makefile:134-136` [Confirmed]
+  * Run Postgres migrations: `make migrate-up` (versioned SQL via `scripts/migrations/apply.sh`) or `make migrate-local` (Ent schema migration)
+    * Evidence: `Makefile:242-243`, `Makefile:174-176` [Confirmed]
+  * Run docker infrastructure (Postgres, Kafka, ClickHouse, Redis, Temporal, plus API/consumer/worker): `make up` → `docker compose up -d --build`
+    * Evidence: `Makefile:57-58` [Confirmed], `docker-compose.yml:1-247` [Confirmed]
+- **Key Environment Variable Names** (Viper, prefix `FLEXPRICE_`, `.` → `_`):
+  * Database: `FLEXPRICE_POSTGRES_HOST`, `FLEXPRICE_POSTGRES_PORT`, `FLEXPRICE_POSTGRES_USER`, `FLEXPRICE_POSTGRES_PASSWORD`, `FLEXPRICE_POSTGRES_DBNAME`, `FLEXPRICE_POSTGRES_SSLMODE`
+  * OLAP Analytics: `FLEXPRICE_CLICKHOUSE_ADDRESS`, `FLEXPRICE_CLICKHOUSE_USERNAME`, `FLEXPRICE_CLICKHOUSE_PASSWORD`, `FLEXPRICE_CLICKHOUSE_DATABASE`
+  * Messaging: `FLEXPRICE_KAFKA_BROKERS`, `FLEXPRICE_KAFKA_TOPIC`, `FLEXPRICE_KAFKA_TOPIC_LAZY`, `FLEXPRICE_KAFKA_CONSUMER_GROUP`
+  * Temporal: `FLEXPRICE_TEMPORAL_ENABLED`, `FLEXPRICE_TEMPORAL_ADDRESS`
+  * Evidence: `.env.local:35-61,123-124` [Confirmed]
+  * Cache: Redis is not set in `.env.local`; it is read from the `redis:` block of `config.yaml`, so the derived names are `FLEXPRICE_REDIS_HOST`, `FLEXPRICE_REDIS_PORT`, `FLEXPRICE_REDIS_USERNAME`, `FLEXPRICE_REDIS_PASSWORD`, `FLEXPRICE_REDIS_DB`
+  * Evidence: `internal/config/config.yaml:186-191` [Confirmed], `internal/config/config.go:1122-1126` [Confirmed]
 
 ---
 
@@ -105,7 +110,8 @@ This document catalogs every verified architectural claim, code path, and core b
   * Evidence: `internal/ee/service/billing.go:50-85` [Confirmed], `internal/ee/service/billing_meter_usage.go:92-165` [Confirmed]
 - **Idempotency Guarantees**:
   * PostgreSQL unique index `idx_tenant_environment_idempotency_key_unique` on `(tenant_id, environment_id, idempotency_key)`
-  * PostgreSQL unique index `idx_subscription_period_unique` on `(subscription_id, period_start, period_end)`
+  * PostgreSQL index `idx_subscription_period_unique` on `(subscription_id, period_start, period_end)` — **despite its name this is a plain, non-unique index** (no `.Unique()` in the Ent schema; the migration emits `CREATE INDEX`, not `CREATE UNIQUE INDEX`), so the database does not stop two non-voided invoices for the same subscription period. Our rebuild makes it a real `UNIQUE` index (`app/db/models.py:138-142`).
+    * Evidence: `ent/schema/invoice.go:289-291` [Confirmed], `migrations/versioned/postgres/20260819000000_baseline.sql:160` [Confirmed]
   * Finalization row lock `GetForUpdate` prevents concurrent duplicate invoice number assignment.
   * Evidence: `ent/schema/invoice.go:285-292` [Confirmed], `internal/ee/service/invoice.go:247-259,1127-1135` [Confirmed]
 

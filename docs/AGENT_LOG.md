@@ -84,3 +84,22 @@ criterion or expected value was changed**, and the rebuilt engine is unaffected
 documents now resolve directly. They are retained for provenance — they record what
 the rebuild agent decided and why, before the documents were corrected — and the
 engine's behaviour matches both the old reading and the corrected documents.
+
+---
+
+## 5. Reviewer-Feedback Corrections (6 Oct 2026)
+
+Applied after the jury's pre-freeze review. Each `flexprice` claim was re-checked
+against the commit studied, `31421e9ff62d00a9f4cdded11d0aad5d32a22f4a`.
+
+| # | Item | Was | Now | Verification |
+| :---: | :--- | :--- | :--- | :--- |
+| **R1** | Commit studied | `277ada2` (this repository's own first commit) | `31421e9ff62d00a9f4cdded11d0aad5d32a22f4a` | `git -C flexprice rev-parse HEAD` on the clone the docs were written from; now stated in `SUBMISSION.md` and at the top of `OBSERVATIONS.md`. |
+| **R2** | Tech stack (`OBSERVATIONS.md` section 1) | Go 1.24.0, Gin v1.10.0, Ent v0.14.1, lib/pq v1.10.9, clickhouse-go v2.30.0, go-redis v9.7.0, Watermill Kafka v3.0.6, Temporal v1.33.0, with `go.mod` lines that did not match | Go 1.27.1, Gin v1.12.0, Ent v0.14.6, lib/pq v1.12.3, clickhouse-go v2.48.0, go-redis v9.22.0, watermill-kafka/v2 v2.5.0, Temporal v1.49.0, Shopspring Decimal v1.4.0 | Each version re-read from `go.mod` at the studied commit, with its line number. Makefile targets, `docker-compose.yml` range and environment variable names were corrected the same way (for example `FLEXPRICE_POSTGRES_DBNAME`, not `_DB`; Redis comes from `config.yaml`, not `.env.local`). |
+| **R3** | `idx_subscription_period_unique` | Listed as a PostgreSQL *unique* index | A plain, non-unique index despite its name | `ent/schema/invoice.go:289-291` has no `.Unique()`; the baseline migration emits `CREATE INDEX`, not `CREATE UNIQUE INDEX`. Our rebuild's index is genuinely `UNIQUE`. |
+| **R4** | Gap 6 wording | "Plan change V2 forbids in-place upgrades between billing intervals" | v2 does not support interval or currency changes and its error hint points callers to the v1 endpoint, which does | `subscription_change_v2.go:89-106` (hint text) and `router.go:373-378` (v1 and v2 routes side by side). |
+
+Non-documentation changes made in the same pass: Windows run commands and `.cmd`
+launchers, a `pytest.ini` so a local `flexprice/` clone is never collected as tests,
+and a browser dashboard (`/app`) over new read-only views. None of these change
+billing behaviour, and all existing tests pass unchanged.

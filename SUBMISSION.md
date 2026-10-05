@@ -1,5 +1,7 @@
 # Submission
 
+**Solution title:** Paise-Perfect — usage billing for Indian AI APIs that never double-bills and explains every rupee
+
 **Team ID:** DBG-136
 
 **Team:** Encode
@@ -12,23 +14,36 @@ repository was read earlier, by a separate reverse-engineering pass, solely to a
 the `docs/` folder — the engine in this repository contains no upstream code and
 depends on no upstream package.)*
 
-**Commit studied:** 277ada2
+**Commit studied:** [`31421e9ff62d00a9f4cdded11d0aad5d32a22f4a`](https://github.com/flexprice/flexprice/tree/31421e9ff62d00a9f4cdded11d0aad5d32a22f4a)
+(Flexprice `main`, 3 Oct 2026 — `git -C flexprice rev-parse HEAD` on the clone the docs were written from;
+every `path:line` in `docs/` refers to this commit)
 
-**Run:**
+**Run (macOS / Linux):**
 
 ```bash
 python3 -m venv venv && ./venv/bin/pip install -r requirements.txt && cp .env.example .env && ./venv/bin/python -m pytest -q && ./scripts/demo
+```
+
+**Run (Windows, PowerShell or cmd):**
+
+```bat
+py -3 -m venv venv
+venv\Scripts\pip install -r requirements.txt
+copy .env.example .env
+venv\Scripts\python -m pytest -q
+scripts\demo
 ```
 
 Individually:
 
 | Step | Command | Expected |
 |---|---|---|
-| Install | `python3 -m venv venv && ./venv/bin/pip install -r requirements.txt` | — |
-| Configure | `cp .env.example .env` | no secrets needed |
-| Tests | `./venv/bin/python -m pytest -q` | **35 passed** (~1s) |
-| Demo | `./scripts/demo` | **67 checks, all PASS** |
-| Server | `./venv/bin/uvicorn app.main:app --reload` | http://127.0.0.1:8000/docs |
+| Install | `python3 -m venv venv && ./venv/bin/pip install -r requirements.txt`<br>Windows: `py -3 -m venv venv` then `venv\Scripts\pip install -r requirements.txt` | — |
+| Configure | `cp .env.example .env` (Windows: `copy .env.example .env`) | no secrets needed |
+| Tests | `./venv/bin/python -m pytest -q` (Windows: `venv\Scripts\python -m pytest -q`) | **40 passed** (~2s) |
+| Demo | `./scripts/demo` (Windows: `scripts\demo`) | **67 checks, all PASS** |
+| Dashboard | `./scripts/ui` (Windows: `scripts\ui`) | opens http://127.0.0.1:8000/app — all three Killer Tests and both improvements, live |
+| Server | `./venv/bin/uvicorn app.main:app --reload` (Windows: `venv\Scripts\uvicorn app.main:app --reload`) | http://127.0.0.1:8000/docs |
 
 **Improvements we built:**
 
@@ -59,7 +74,11 @@ Individually:
    key, an API error or a model refusal all return `200 OK` from the deterministic
    `docs/GAPS.md` template, with `source` and `ai_error` on the response so the
    fallback is visible rather than silent. Both the missing-SDK and API-error paths
-   are covered by tests.
+   are covered by tests. **On screen:** `./scripts/ui` (Windows: `scripts\ui`) seeds
+   a demo tenant and opens the `/app` dashboard — the bill in plain words with a
+   line-by-line breakdown, and a red "Spike detected · 10× normal" banner next to
+   a calm customer. The same dashboard runs all three Killer Tests live
+   (concurrent duplicate post, Day-15 upgrade, slab vs volume slider).
 
 **Libraries / AI used:**
 
@@ -76,13 +95,17 @@ Individually:
 * **python-dotenv** — loads `.env` so time windows and the optional AI key come from
   the environment, never from the code.
 * **httpx** — HTTP client for `scripts/demo` and the test client.
-* **pytest** — the test runner for all 35 cases.
+* **pytest** — the test runner for all 40 cases.
 * **reportlab** — generates `deck.pdf` from `scripts/make_deck.py`, so the deck is
   reproducible from source rather than hand-built.
 * **anthropic** (**optional**, deliberately left commented out in
   `requirements.txt`) — the SDK for the invoice explainer. Leaving it uninstalled by
   default means the standard install and the full test suite exercise the
   deterministic fallback path.
+* **Google Stitch** (design tool, not a runtime dependency) — generated the visual
+  mock-ups the `/app` dashboard's layout follows. The page itself was written by hand
+  as plain HTML/CSS/JS with no framework or build step, and every figure on it is
+  fetched from the engine's API; Stitch's placeholder content was not used.
 
 **AI model:** **Claude Opus 5.5** (`claude-opus-5-5`), via the Anthropic Messages
 API, used only for the plain-language invoice explainer. *Why:* the task is pure
