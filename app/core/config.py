@@ -15,7 +15,7 @@ DEFAULTS = {
     "BILLING_NOW": "",
     "BILLING_PERIOD_MINUTES": "0",
     "AI_PROVIDER_API_KEY": "",
-    "AI_MODEL": "claude-opus-5",
+    "AI_MODEL": "claude-opus-5-5",
     "SPIKE_THRESHOLD_FACTOR": "3.0",
     "MAX_PAST_DRIFT_DAYS": "30",
     "MAX_FUTURE_DRIFT_MINUTES": "5",

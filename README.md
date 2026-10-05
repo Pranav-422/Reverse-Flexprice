@@ -194,7 +194,7 @@ required to run anything in this repository.**
 | `BILLING_NOW` | Injected ISO-8601 server time; empty = real clock |
 | `BILLING_PERIOD_MINUTES` | `0` = calendar months; `>0` = minute-long cycles for demos |
 | `AI_PROVIDER_API_KEY` | **Optional.** Empty = deterministic template fallback |
-| `AI_MODEL` | Model used only when a key is set (`claude-opus-5`) |
+| `AI_MODEL` | Model used only when a key is set (`claude-opus-5-5`) |
 | `SPIKE_THRESHOLD_FACTOR` | Spike multiple over the 7-day hourly average (`3.0`) |
 | `MAX_PAST_DRIFT_DAYS` / `MAX_FUTURE_DRIFT_MINUTES` | Event timestamp drift bounds |
 | `TENANT_ID` | Default tenant when no `X-Tenant-ID` header is sent |

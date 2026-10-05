@@ -131,7 +131,7 @@ Founders, product engineers, and billing platform developers at Indian AI API st
   "event_name": "token_usage",
   "customer_id": "cust_ai_01",
   "timestamp": "2026-10-01T10:00:00Z",
-  "properties": {"tokens": 50000}
+  "properties": {"total_tokens": 50000}
 }
 // Expected Response: HTTP 201 Created
 
@@ -141,12 +141,17 @@ Founders, product engineers, and billing platform developers at Indian AI API st
   "event_name": "token_usage",
   "customer_id": "cust_ai_01",
   "timestamp": "2026-10-01T10:00:00Z",
-  "properties": {"tokens": 50000}
+  "properties": {"total_tokens": 50000}
 }
 // Expected Response: HTTP 200 OK (idempotent duplicate skipped)
 
 // Query: GET /v1/meters/meter_tokens/usage?customer_id=cust_ai_01
 // Expected Output: {"quantity": 50, "raw_units": 50000}
+
+// NOTE: the property key is `total_tokens`, matching the meter's configured
+// `value_property` and the acceptance criteria in section 5. The `timestamp`
+// field accepts EITHER an ISO-8601 string (as above) OR epoch seconds (as in
+// API.md section 4); both forms are valid on every endpoint that takes a time.
 ```
 
 ### Scenario 2: Verify Mid-Month Plan Upgrade

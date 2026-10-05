@@ -182,9 +182,12 @@ def _call_llm(prompt: str, system: str) -> str:
     anthropic = _load_sdk()
     client = anthropic.Anthropic(api_key=config.ai_api_key(), timeout=20.0,
                                  max_retries=1)
+    # NOTE: no `thinking` argument. Adaptive thinking is always on for
+    # claude-opus-5-5 and `thinking: {"type": "disabled"}` returns a 400 at every
+    # effort level. max_tokens is a hard cap on thinking PLUS response text.
     response = client.messages.create(
         model=config.get("AI_MODEL"),
-        max_tokens=2048,
+        max_tokens=4096,
         output_config={"effort": "low"},
         system=system,
         messages=[{"role": "user", "content": prompt}],

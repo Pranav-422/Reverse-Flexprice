@@ -1,4 +1,6 @@
-# Ignore upstream cloned repo (never cloned in this rebuild; kept for safety)
+# Upstream repo working copy. It was cloned only by the earlier
+# reverse-engineering pass that authored docs/; the rebuild itself never
+# reads it. Ignored so no upstream source can ever enter this repository.
 flexprice/
 
 # Environment / local secrets

@@ -164,7 +164,7 @@ SLIDES = [
                      "response so the fallback is visible, not silent."),
                     ("The model never does arithmetic",
                      "Every figure is computed locally from the sealed invoice; "
-                     "claude-opus-5 only rewrites those facts. An AI outage "
+                     "claude-opus-5-5 only rewrites those facts. An AI outage "
                      "changes the wording, never the money."),
                 ],
             },
