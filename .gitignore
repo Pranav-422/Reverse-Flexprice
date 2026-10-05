@@ -1,6 +1,34 @@
-# Ignore upstream cloned repo
+# Ignore upstream cloned repo (never cloned in this rebuild; kept for safety)
 flexprice/
 
-# Environment / local
+# Environment / local secrets
 .env
+.env.local
+*.env
+!.env.example
+
+# Python
+venv/
+.venv/
+env/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# Databases / local state
+*.db
+*.db-wal
+*.db-shm
+*.sqlite
+*.sqlite3
+
+# Node (not used, guarded anyway)
+node_modules/
+
+# OS / editor
 .DS_Store
+.idea/
+.vscode/

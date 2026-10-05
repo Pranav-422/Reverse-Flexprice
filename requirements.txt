@@ -1,0 +1,18 @@
+# Core API engine (ARCHITECTURE.md S4: Python 3.12+ / FastAPI / SQLite)
+fastapi>=0.115
+uvicorn>=0.34
+pydantic>=2.10
+python-dotenv>=1.0
+
+# Tests + demo client
+httpx>=0.28
+pytest>=8.3
+
+# deck.pdf generation (scripts/make_deck.py)
+reportlab>=4.2
+
+# OPTIONAL: AI invoice explainer (GAPS.md Improvement 2).
+# The app runs fully without this package and without AI_PROVIDER_API_KEY --
+# it falls back to the deterministic template. Install only if you want AI mode:
+#   pip install anthropic
+# anthropic>=0.40
