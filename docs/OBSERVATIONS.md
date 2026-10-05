@@ -49,10 +49,10 @@ This document catalogs every verified architectural claim, code path, and core b
 ### A. Event Deduplication & Storage
 - **Event Identifier**: Events are uniquely identified by `event.ID` (`id`), populated from `event_id` in the ingestion request or auto-generated as UUID/ULID.
   * Evidence: `internal/ee/service/event.go:83` [Confirmed], `internal/domain/events/model.go:16` [Confirmed]
-- **Redis Dedup Key**: Distributed cache lock uses key `event:<event_id>` with 24-hour TTL (`eventDeduplicationLockTTL = 24 * time.Hour`). If `SetNX` fails, consumer drops event with log `event already processed, skipping`.
-  * Evidence: `internal/ee/service/meter_usage_tracking.go:434-445` [Confirmed]
-- **ClickHouse Storage Engine**: Table `events` and `meter_usage` use engine `ReplacingMergeTree(ingested_at)` ordered by `(tenant_id, environment_id, timestamp, id)`.
-  * Evidence: `migrations/clickhouse/000001_create_events_table.up.sql:17-20` [Confirmed], `migrations/clickhouse/000002_create_meter_usage_table.up.sql:19-22` [Confirmed]
+- **Redis Dedup Key**: Distributed lock via `Locker.AcquireLock` on key `<tenant_id>:<environment_id>:event:v1::<event_id>` (built by `cache.GenerateKey` with prefix `PrefixEvent = "event:v1:"`) with a 24-hour TTL (`eventDeduplicationLockTTL = 24 * time.Hour`). If the lock is already held, the consumer drops the event with log `event already processed, skipping`.
+  * Evidence: `internal/ee/service/meter_usage_tracking.go:30` [Confirmed], `internal/ee/service/meter_usage_tracking.go:430-445` [Confirmed], `internal/cache/cache.go:72,126-143` [Confirmed]
+- **ClickHouse Storage Engine**: Tables `events` and `meter_usage` both use `ReplacingMergeTree(ingested_at)` with `timestamp` inside the sorting key: `events` is ordered by `(tenant_id, environment_id, timestamp, id)`; `meter_usage` by `(tenant_id, environment_id, external_customer_id, meter_id, timestamp, id)`.
+  * Evidence: `migrations/clickhouse/000001_create_events_table.up.sql:17-20` [Confirmed], `migrations/clickhouse/000007_create_meter_usage.sql:32-35` [Confirmed]
 - **ClickHouse Query Finalization**: Usage queries append `FINAL` modifier (`SETTINGS do_not_merge_across_partitions_select_final = 1`) to collapse duplicate rows.
   * Evidence: `internal/repository/clickhouse/meter_usage_query_builder.go:253-259` [Confirmed]
 - **Unique Count Hash**: `COUNT_UNIQUE` aggregations derive SHA-256 `unique_hash` from designated attributes, checking `unique_hash != ''`.
@@ -66,7 +66,7 @@ This document catalogs every verified architectural claim, code path, and core b
 - **Window Boundaries**: Half-open intervals: `timestamp >= period_start AND timestamp < period_end`.
   * Evidence: `internal/repository/clickhouse/meter_usage_query_builder.go:181-187` [Confirmed]
 - **Late Arrivals**: Late events bucket by event `timestamp` (not ingestion time). Draft invoices recompute usage via `ComputeInvoice`; finalized invoices are immutable.
-  * Evidence: `internal/ee/service/invoice.go:500-501,580-608` [Confirmed], `internal/ee/service/invoice.go:1123-1145` [Confirmed]
+  * Evidence: `internal/ee/service/invoice.go:491-501,580-608` [Confirmed], `internal/ee/service/invoice.go:1123-1145` [Confirmed]
 
 ### C. Tiered Pricing & Unit Conversions
 - **Tier Modes**:
@@ -123,11 +123,11 @@ This document catalogs every verified architectural claim, code path, and core b
 1. Client issues `POST /v1/events` -> `internal/api/v1/events.go:54-74` [Confirmed]
 2. Handled by `eventService.CreateEvent` -> publishes to Kafka topic `events` -> `internal/ee/service/event.go:68-84` [Confirmed]
 3. Handler returns HTTP 202 Accepted with `event_id` -> `internal/api/v1/events.go:81` [Confirmed]
-4. Consumer triggers `meterUsageTrackingService.processEvent` -> sets Redis lock `event:<id>` (24h) -> `internal/ee/service/meter_usage_tracking.go:434-445` [Confirmed]
+4. Consumer triggers `meterUsageTrackingService.processEvent` -> acquires Redis lock `<tenant>:<env>:event:v1::<id>` (24h) -> `internal/ee/service/meter_usage_tracking.go:430-445` [Confirmed]
 5. Matches active meters by event name -> extracts quantity -> generates `unique_hash` -> `internal/ee/service/meter_usage_tracking.go:462-508` [Confirmed]
 6. Bulk inserts records into ClickHouse `meter_usage` -> `internal/ee/service/meter_usage_tracking.go:521-524` [Confirmed]
 7. During cycle billing, `CalculateMeterUsageCharges` queries ClickHouse with `FINAL` -> `internal/ee/service/billing_meter_usage.go:92-165` [Confirmed]
-8. Evaluates tiered cost via `priceService.CalculateCost` -> `internal/ee/service/price.go:1163-1232` [Confirmed]
+8. Evaluates tiered cost via `priceService.CalculateCost`, which delegates to `calculateSingletonCost` (tier logic in its `TierMode` switch) -> `internal/ee/service/price.go:1126-1128,1088,1163-1232` [Confirmed]
 9. Invoice transaction locks invoice row (`GetForUpdate`) and calls `reconcileLineItems` to write to `invoice_line_items` -> `internal/ee/service/invoice.go:580-640` [Confirmed]
 
 ### Trace B: Mid-Period Upgrade & Proration Settlement
