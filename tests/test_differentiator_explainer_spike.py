@@ -353,3 +353,14 @@ def test_ui_page_is_served_and_reads_both_endpoints(client):
     assert resp.headers["content-type"].startswith("text/html")
     assert "/explanation" in resp.text
     assert "/spike-status" in resp.text
+
+
+def test_settlement_explanation_does_not_narrate_zero_usage(client, at_time,
+                                                            monkeypatch):
+    """A proration-only invoice must not read "You used 0 tokens ... 0 units"."""
+    monkeypatch.setenv("AI_PROVIDER_API_KEY", "")
+    _, settlement = _seed_acceptance_scenario(client, at_time)
+    text = client.get(f"/v1/invoices/{settlement['id']}/explanation",
+                      headers=TENANT_HEADER).json()["explanation"]
+    assert "0 tokens" not in text and "Tier 1" not in text
+    assert "15 unused days" in text and "6,000 paise charged" in text

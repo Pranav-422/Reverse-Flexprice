@@ -40,7 +40,7 @@ Individually:
 |---|---|---|
 | Install | `python3 -m venv venv && ./venv/bin/pip install -r requirements.txt`<br>Windows: `py -3 -m venv venv` then `venv\Scripts\pip install -r requirements.txt` | — |
 | Configure | `cp .env.example .env` (Windows: `copy .env.example .env`) | no secrets needed |
-| Tests | `./venv/bin/python -m pytest -q` (Windows: `venv\Scripts\python -m pytest -q`) | **40 passed** (~2s) |
+| Tests | `./venv/bin/python -m pytest -q` (Windows: `venv\Scripts\python -m pytest -q`) | **41 passed** (~2s) |
 | Demo | `./scripts/demo` (Windows: `scripts\demo`) | **67 checks, all PASS** |
 | Dashboard | `./scripts/ui` (Windows: `scripts\ui`) | opens http://127.0.0.1:8000/app — all three Killer Tests and both improvements, live |
 | Server | `./venv/bin/uvicorn app.main:app --reload` (Windows: `venv\Scripts\uvicorn app.main:app --reload`) | http://127.0.0.1:8000/docs |
@@ -95,7 +95,7 @@ Individually:
 * **python-dotenv** — loads `.env` so time windows and the optional AI key come from
   the environment, never from the code.
 * **httpx** — HTTP client for `scripts/demo` and the test client.
-* **pytest** — the test runner for all 40 cases.
+* **pytest** — the test runner for all 41 cases.
 * **reportlab** — generates `deck.pdf` from `scripts/make_deck.py`, so the deck is
   reproducible from source rather than hand-built.
 * **anthropic** (**optional**, deliberately left commented out in

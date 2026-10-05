@@ -61,7 +61,7 @@
   .crumb { color: var(--muted); font-size: 12.5px; margin-bottom: 4px; }
   h1 { font: 700 26px/1.2 var(--head); color: var(--primary); margin: 0; letter-spacing: -.015em; }
   .lede { color: var(--ink-2); margin: 6px 0 20px; max-width: 900px; }
-  .tag { display: inline-flex; align-items: center; gap: 5px; padding: 2px 8px; border-radius: 6px;
+  .tag { display: inline-flex; align-items: center; gap: 5px; padding: 2px 8px; border-radius: 6px; overflow-wrap: anywhere;
          font-size: 11px; font-weight: 700; letter-spacing: .03em; text-transform: uppercase;
          background: var(--primary-soft); color: var(--primary-c); vertical-align: middle; }
   .tag.green { background: var(--green-soft); color: var(--green); }
@@ -74,7 +74,7 @@
   .g4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   .g2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .g-main { grid-template-columns: minmax(0, 1.55fr) minmax(320px, 1fr); }
-  @media (max-width: 1150px) { .g4 { grid-template-columns: repeat(2, minmax(0,1fr)); } .g-main, .g2 { grid-template-columns: 1fr; } }
+  @media (max-width: 1150px) { .g4 { grid-template-columns: repeat(2, minmax(0,1fr)); } .g-main, .g2 { grid-template-columns: minmax(0, 1fr); } }
   @media (max-width: 760px) { .side { display: none; } .top, main { margin-left: 0; } .g4 { grid-template-columns: 1fr; } }
 
   .card { background: var(--card); border: 1px solid var(--line); border-radius: var(--r); padding: 18px 20px;
@@ -86,6 +86,7 @@
   .label { font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
   .kpi .v { font: 700 30px/1.15 var(--head); margin: 8px 0 4px; letter-spacing: -.02em; }
   .kpi .v.red { color: var(--red); }
+  .stack { min-width: 0; }
   .stack > * + * { margin-top: 18px; }
 
   table { width: 100%; border-collapse: collapse; }
@@ -126,7 +127,8 @@
   .res.dup { border-color: var(--line-2); background: #f6f7fa; }
   .res.err { border-color: #f1b0aa; background: #fff6f5; }
   .res dl { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; margin: 10px 0 0; font-size: 12.5px; }
-  .res dt { color: var(--muted); } .res dd { margin: 0; text-align: right; }
+  .res dt { color: var(--muted); } .res dd { margin: 0; text-align: right; overflow-wrap: anywhere; }
+  .res .msg { margin-top: 8px; font-size: 12.5px; color: var(--ink-2); }
 
   .alert { border-radius: var(--r); padding: 16px 18px; display: flex; gap: 14px; align-items: flex-start; }
   .alert.hot { background: var(--red-strong); color: #fff; }
@@ -157,6 +159,36 @@
   .err { color: var(--red); }
   .foot { margin-top: 22px; display: flex; gap: 12px; align-items: center; }
   svg.chart text { font: 10.5px var(--body); fill: var(--muted); }
+  .mnav { display: none; }
+  tr.click:focus-visible td { background: var(--primary-tint); outline: none; }
+  tr.click:focus-visible td:first-child { box-shadow: inset 3px 0 0 var(--primary-c); }
+  a:focus-visible, button:focus-visible { outline: 2px solid var(--primary-c); outline-offset: 2px; }
+  tr.fresh td { background: var(--green-soft); }
+  .guide { counter-reset: step; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; }
+  .guide a { counter-increment: step; display: block; padding: 12px 14px 12px 44px; position: relative;
+             border: 1px solid var(--line); border-radius: 10px; color: var(--ink); background: var(--card); }
+  .guide a:hover { border-color: var(--primary-c); background: var(--primary-tint); text-decoration: none; }
+  .guide a::before { content: counter(step); position: absolute; left: 12px; top: 12px; width: 22px; height: 22px;
+                     border-radius: 50%; background: var(--primary-c); color: #fff; font: 700 12px/22px var(--head); text-align: center; }
+  .guide b { display: block; font-size: 13px; } .guide span { color: var(--muted); font-size: 12px; }
+  .guide em { display: block; font-style: normal; color: var(--primary-c); font-size: 11px; font-weight: 700;
+              letter-spacing: .04em; text-transform: uppercase; margin-bottom: 2px; }
+  @media (max-width: 1150px) { .guide { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (max-width: 760px) {
+    .top { height: auto; flex-wrap: wrap; padding: 10px 16px; }
+    .top .grow { display: none; }
+    .mnav { display: flex; gap: 6px; overflow-x: auto; padding: 10px 16px; background: var(--card);
+            border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 4; }
+    .mnav a { white-space: nowrap; padding: 6px 12px; border-radius: 99px; background: var(--primary-tint); color: var(--ink-2); font-weight: 600; font-size: 12.5px; }
+    .mnav a.on { background: var(--primary-c); color: #fff; }
+    main { padding: 16px 16px 48px; }
+    .row2 { grid-template-columns: 1fr; }
+    .guide { grid-template-columns: 1fr; }
+    .card table { display: block; overflow-x: auto; }
+    .card td, .card th { white-space: nowrap; }
+    .bar-row { grid-template-columns: 90px 1fr 60px; }
+    .foot { flex-direction: column; align-items: flex-start; }
+  }
 </style>
 </head>
 <body>
@@ -165,11 +197,12 @@
   <nav id="nav"></nav>
   <div class="side-foot"><b>Storage</b>SQLite · integer paise · UNIQUE(tenant_id, event_id)</div>
 </aside>
+<nav class="mnav" id="mnav" aria-label="Sections"></nav>
 <header class="top">
   <span class="chip" id="tenant">tenant</span>
   <span class="grow"></span>
   <span class="chip" id="ai"></span>
-  <span class="chip blue" id="clock" title="BILLING_NOW — the engine's injected clock">clock</span>
+  <span class="chip blue" id="clock" title="BILLING_NOW — the engine's injected clock. scripts/ui freezes it so every number is reproducible.">clock</span>
 </header>
 <main id="view"></main>
 
@@ -224,12 +257,13 @@ function renderNav(cur) {
     h("a", { href: "#/" + k, class: cur === k ? "on" : null },
       icon(ICONS[k]),
       label, k === "spike" && spikeCount ? h("span", { class: "pill" }, spikeCount + " active") : null)));
+  $("#mnav").replaceChildren(...PAGES.map(([k, label]) => h("a", { href: "#/" + k, class: cur === k ? "on" : null }, label)));
 }
 
 async function refreshTop() {
   try {
     const hl = await api("/health");
-    $("#clock").textContent = "Server clock " + dt(hl.now_iso);
+    $("#clock").textContent = (hl.billing_now_injected ? "Demo clock (frozen) " : "Server clock ") + dt(hl.now_iso);
     $("#ai").textContent = hl.ai_explainer === "live" ? "AI explainer: live" : "AI explainer: template (no key)";
   } catch {}
 }
@@ -273,7 +307,8 @@ const P = {};
 
 P.overview = async () => {
   const [o, inv, cust] = await Promise.all([api("/v1/overview"), api("/v1/invoices"), api("/v1/customers")]);
-  const watch = cust.customers.filter(c => !c.subscription_id).map(c => c.id).slice(0, 2);
+  const watch = (await Promise.all(cust.customers.map(c => api(`/v1/customers/${c.id}/spike-status`))))
+    .filter(s => s.baseline_hourly_tokens > 0).map(s => s.customer_id).slice(0, 3);
   const hot = o.active_spikes[0];
   const series = await Promise.all(watch.map(id => api(`/v1/usage/hourly?customer_id=${id}&hours=168`)));
   const colors = ["#b3261e", "#0d47a1", "#076d2e"];
@@ -281,6 +316,14 @@ P.overview = async () => {
   return [
     h("div", { class: "titlerow" }, h("h1", {}, "Overview"), h("span", { class: "tag grey" }, "tenant " + (TENANT || "default"))),
     h("p", { class: "lede" }, "Live numbers from this engine's SQLite store. Every amount is an integer number of paise."),
+    h("div", { class: "card", style: "margin-bottom:18px" },
+      h("div", { class: "card-h" }, h("div", {}, h("h2", {}, "Try it in five clicks"), h("div", { class: "sub" }, "Each step runs against the real engine — nothing on these screens is mocked."))),
+      h("div", { class: "guide" },
+        h("a", { href: "#/events" }, h("em", {}, "Killer Test 1"), h("b", {}, "Send a duplicate event"), h("span", {}, "Usage Events → “Send twice concurrently”. One row is stored.")),
+        h("a", { href: "#/customers/c_live" }, h("em", {}, "Killer Test 2"), h("b", {}, "Upgrade on Day 15"), h("span", {}, "Live Demo Co → Execute upgrade. Net due exactly ₹30.00.")),
+        h("a", { href: "#/pricing" }, h("em", {}, "Killer Test 3"), h("b", {}, "Slab vs volume"), h("span", {}, "Pricing → 1,500k tokens: ₹140 vs ₹85.")),
+        h("a", { href: inv.invoices[0] ? "#/invoices/" + (inv.invoices.find(i => i.invoice_type !== "one_off") || inv.invoices[0]).id : "#/invoices" }, h("em", {}, "Improvement 2"), h("b", {}, "Read the bill in plain words"), h("span", {}, "Every rupee explained, with or without an AI key.")),
+        h("a", { href: "#/spike" }, h("em", {}, "Improvement 2"), h("b", {}, "Catch a runaway agent"), h("span", {}, "Spike Monitor → simulate a loop on Steady Labs.")))),
     h("div", { class: "grid g4" },
       kpi("Billed (finalized invoices)", rs(o.billed_paise), `${o.finalized_invoices} invoice${o.finalized_invoices === 1 ? "" : "s"}`),
       kpi("Event rows stored", int(o.event_rows), o.event_rows === o.distinct_event_ids ? h("span", { class: "tag green" }, "1 row per event_id") : `${int(o.distinct_event_ids)} distinct ids`),
@@ -288,7 +331,7 @@ P.overview = async () => {
       kpi("Active spike alerts", String(o.active_spikes.length), hot ? h("a", { href: "#/spike" }, `${hot.customer_id} at ${hot.ratio}× →`) : "all within threshold", o.active_spikes.length ? "red" : "")),
     h("div", { class: "grid g-main", style: "margin-top:18px" },
       h("div", { class: "card" },
-        h("div", { class: "card-h" }, h("div", {}, h("h2", {}, "Tokens per hour, last 7 days"), h("div", { class: "sub" }, "Customers without a subscription — the spike-monitor demo pair")),
+        h("div", { class: "card-h" }, h("div", {}, h("h2", {}, "Tokens per hour, last 7 days"), h("div", { class: "sub" }, "Customers with a 7-day usage history; dashed line = alert threshold")),
           legend(series.map((s, i) => ({ name: s.customer_id, color: colors[i] })))),
         series.length ? lineChart(series.map((s, i) => ({ points: s.points, color: colors[i] })), { threshold: sp ? sp.threshold_tokens : null }) : h("div", { class: "empty" }, "No usage yet"),
         sp ? h("div", { class: "note", style: "margin-top:10px" }, h("b", {}, `${sp.customer_id}: `), sp.message) : null),
@@ -303,11 +346,16 @@ P.overview = async () => {
 function kpi(label, value, foot, cls) {
   return h("div", { class: "card kpi" }, h("div", { class: "label" }, label), h("div", { class: "v num " + (cls || "") }, value), h("div", { class: "sub" }, foot));
 }
+function rowLink(href, ...cells) {
+  const go = () => location.hash = href;
+  return h("tr", { class: "click", tabindex: "0", role: "link", onclick: go,
+                   onkeydown: (e) => { if (e.key === "Enter") go(); } }, ...cells);
+}
 function invoiceTable(rows, compact) {
   if (!rows.length) return h("div", { class: "empty" }, "No invoices yet");
   return h("table", {},
     h("tr", {}, h("th", {}, "Invoice"), h("th", {}, "Customer"), compact ? null : h("th", {}, "Period"), h("th", {}, "Type"), h("th", { class: "r" }, "Amount")),
-    rows.map(r => h("tr", { class: "click", onclick: () => location.hash = "#/invoices/" + r.id },
+    rows.map(r => rowLink("#/invoices/" + r.id,
       h("td", {}, h("code", {}, compact ? short(r.id) : r.id)), h("td", {}, r.customer_name),
       compact ? null : h("td", { class: "sub" }, r.invoice_type === "one_off" ? day(r.period_start_iso) : `${day(r.period_start_iso)} – ${day(r.period_end_iso)}`),
       h("td", {}, h("span", { class: "tag " + (r.invoice_type === "one_off" ? "amber" : "") }, r.invoice_type === "one_off" ? "proration" : "cycle")),
@@ -326,7 +374,8 @@ P.events = async () => {
   };
   const out = h("div", { class: "stack" }, h("div", { class: "empty" }, "Send an event to see what the engine stores."));
   const tbody = h("tbody");
-  const fillRecent = (rows) => tbody.replaceChildren(...rows.map(e => h("tr", {},
+  let freshId = null;
+  const fillRecent = (rows) => tbody.replaceChildren(...rows.map(e => h("tr", { class: e.event_id === freshId ? "fresh" : null },
     h("td", {}, h("code", {}, e.event_id)), h("td", {}, e.customer_id), h("td", {}, e.event_name),
     h("td", { class: "r num" }, int(e.quantity)), h("td", { class: "r num" }, (e.quantity / 1000).toLocaleString("en-US", { maximumFractionDigits: 3 })),
     h("td", { class: "sub" }, dt(e.timestamp_iso)))));
@@ -342,6 +391,7 @@ P.events = async () => {
     const calls = twice ? [post("/v1/events", body(ts), true), post("/v1/events", body(shift(ts, 2)), true)]
                         : [post("/v1/events", body(ts), true)];
     const res = await Promise.all(calls);
+    freshId = f.id.value.trim();
     const rows = await api("/v1/events?event_id=" + encodeURIComponent(f.id.value.trim()));
     out.replaceChildren(
       h("div", { class: "grid " + (twice ? "g2" : ""), style: "gap:12px" }, res.map((r, i) => resultCard(r, i, twice ? (i ? shift(ts, 2) : ts) : ts))),
@@ -368,7 +418,8 @@ P.events = async () => {
           h("div", { class: "row2" }, h("label", { class: "field" }, h("span", {}, "event_name"), f.name), h("label", { class: "field" }, h("span", {}, "customer_id"), f.cust)),
           h("div", { class: "row2" }, h("label", { class: "field" }, h("span", {}, "timestamp"), f.ts), h("label", { class: "field" }, h("span", {}, "properties.total_tokens"), f.tokens)),
           h("div", { class: "note" }, "Meter ", h("b", {}, "LLM Inference Tokens"), ": SUM(total_tokens) ÷ 1,000 = billable units → this event is ", unitsEl, " units."),
-          h("div", { class: "btns" }, sendBtn, twiceBtn))),
+          h("div", { class: "btns" }, sendBtn, twiceBtn,
+            h("button", { class: "btn", onclick: () => { f.id.value = "evt_" + Math.random().toString(36).slice(2, 8); f.id.focus(); } }, "New event_id")))),
       h("div", { class: "card" }, h("div", { class: "card-h" }, h("h2", {}, "What the engine returned")), out)),
     h("div", { class: "card", style: "margin-top:18px" },
       h("div", { class: "card-h" }, h("h2", {}, "Most recently ingested"), total),
@@ -381,8 +432,10 @@ function resultCard(r, i, ts) {
     h("div", { class: "card-h", style: "margin:0" }, h("b", {}, `Request #${i + 1}`),
       h("span", { class: "tag " + (ok ? "green" : dup ? "grey" : "red") }, `${r.status} ${r.body ? r.body.status || "" : ""}`)),
     h("dl", {}, h("dt", {}, "timestamp"), h("dd", {}, h("code", {}, ts)),
-      ok ? [h("dt", {}, "recorded tokens"), h("dd", { class: "num" }, int(r.body.recorded_quantity))] : null,
-      h("dt", {}, "message"), h("dd", {}, (r.body && (r.body.message || r.body.detail)) || (ok ? "stored" : ""))));
+      ok ? [h("dt", {}, "recorded tokens"), h("dd", { class: "num" }, int(r.body.recorded_quantity))] : null),
+    h("div", { class: "msg" }, ok ? "Won the INSERT — this is the one stored row."
+      : dup ? "Lost to the unique index — " + r.body.message.toLowerCase() + "."
+      : (r.body && (r.body.detail || r.body.message)) || "request failed"));
 }
 
 P.customers = async (id) => {
@@ -391,7 +444,7 @@ P.customers = async (id) => {
     h("h1", {}, "Customers"), h("p", { class: "lede" }, "Click a customer to preview or run a mid-cycle upgrade and generate invoices."),
     h("div", { class: "card" }, h("table", {},
       h("tr", {}, h("th", {}, "Customer"), h("th", {}, "ID"), h("th", {}, "Plan"), h("th", {}, "Current period")),
-      cust.customers.map(c => h("tr", { class: "click", onclick: () => location.hash = "#/customers/" + c.id },
+      cust.customers.map(c => rowLink("#/customers/" + c.id,
         h("td", {}, h("b", {}, c.name)), h("td", {}, h("code", {}, c.id)),
         h("td", {}, c.plan_name ? h("span", { class: "tag" }, c.plan_name) : h("span", { class: "sub" }, "no subscription")),
         h("td", { class: "sub" }, c.current_period_start ? `${day(iso(c.current_period_start))} – ${day(iso(c.current_period_end))}` : "—"))))),
@@ -399,6 +452,10 @@ P.customers = async (id) => {
   const c = cust.customers.find(x => x.id === id);
   if (!c) throw new Error("customer " + id + " not found");
   const [plans, invs] = await Promise.all([api("/v1/plans"), api("/v1/invoices?customer_id=" + id)]);
+  const settlements = await Promise.all(invs.invoices
+    .filter(i => i.invoice_type === "one_off" && i.subscription_id === c.subscription_id
+                 && i.period_start >= c.current_period_start && i.period_start < c.current_period_end)
+    .map(i => api("/v1/invoices/" + i.id)));
   const head = [h("div", { class: "crumb" }, h("a", { href: "#/customers" }, "Customers"), " / ", c.id),
     h("div", { class: "titlerow" }, h("h1", {}, c.name), h("span", { class: "tag grey" }, c.external_id), c.plan_name ? h("span", { class: "tag" }, c.plan_name) : null)];
   const invCard = h("div", { class: "card" }, h("div", { class: "card-h" }, h("h2", {}, "Invoices")), invoiceTable(invs.invoices, true));
@@ -448,19 +505,40 @@ P.customers = async (id) => {
   } }, "Generate invoice for current period");
 
   target.onchange = eff.onchange = () => preview().catch(e => prev.replaceChildren(h("div", { class: "res err" }, e.message)));
-  if (others.length) target.onchange();
+  const done = settlements[settlements.length - 1];
+  if (done) {
+    // Show what actually happened this period instead of a hypothetical.
+    const cr = done.line_items.find(l => l.metadata.charge_type === "proration_credit");
+    const ch = done.line_items.find(l => l.metadata.charge_type === "proration_charge");
+    const m = ch.metadata, served = m.total_days - m.remaining_days, pct = served / m.total_days * 100;
+    const nm = (pid) => (plans.plans.find(p => p.id === pid) || { name: pid }).name;
+    prev.replaceChildren(
+      h("div", { class: "timeline" },
+        h("div", { class: "old", style: `width:${pct}%` }, h("b", {}, nm(cr.metadata.plan_id)), `${served} days`),
+        h("div", { class: "new", style: `width:${100 - pct}%` }, h("b", {}, nm(m.plan_id)), `${m.remaining_days} days`)),
+      h("div", { class: "tl-axis" }, h("span", {}, day(iso(c.current_period_start))), h("span", {}, "changed " + day(done.period_start_iso)), h("span", {}, day(iso(c.current_period_end)))),
+      h("table", { style: "margin-top:14px" },
+        h("tr", {}, h("th", {}, "Settled on " + day(done.period_start_iso)), h("th", { class: "r" }, "Coefficient"), h("th", { class: "r" }, "Amount")),
+        [cr, ch].map(l => h("tr", {}, h("td", {}, h("b", {}, l.description), h("div", { class: "sub" }, `${rs(l.metadata.full_period_paise)} × ${l.metadata.remaining_days}/${l.metadata.total_days}`)),
+          h("td", { class: "r num" }, l.metadata.coefficient), h("td", { class: "r num" + (l.amount_paise < 0 ? " neg" : "") }, rs(l.amount_paise)))),
+        h("tr", { class: "sum" }, h("td", {}, "Net, settled"), h("td", {}), h("td", { class: "r num" }, rs(done.amount_due_paise)))),
+      h("div", { class: "note", style: "margin-top:12px" }, "Settlement invoice ", h("a", { href: "#/invoices/" + done.id }, h("code", {}, done.id)), ". The cycle invoice for this period is billed on the new plan and is not touched."));
+    target.disabled = eff.disabled = upBtn.disabled = true;
+    result.replaceChildren(h("div", { class: "note", style: "margin-top:12px" }, "This subscription already changed plan this period, so the simulator is locked here. ",
+      h("a", { href: "#/customers/c_live" }, "Try it live on Live Demo Co →")));
+  } else if (others.length) target.onchange();
   return [...head,
     h("p", { class: "lede" }, `Subscription `, h("code", {}, c.subscription_id), ` · period ${day(iso(c.current_period_start))} – ${day(iso(c.current_period_end))}`),
     h("div", { class: "titlerow", style: "margin-bottom:12px" }, h("span", { class: "tag" }, "Killer Test 2"), h("span", { class: "tag green" }, "covered by tests/test_killer_2_proration.py")),
     h("div", { class: "grid g-main" },
-      h("div", { class: "card" }, h("div", { class: "card-h" }, h("div", {}, h("h2", {}, "Mid-cycle upgrade"), h("div", { class: "sub" }, "Day-based proration, computed by the engine"))), prev, result),
+      h("div", { class: "card" }, h("div", { class: "card-h" }, h("div", {}, h("h2", {}, done ? "Plan change this period" : "Mid-cycle upgrade preview"), h("div", { class: "sub" }, done ? "What the engine settled" : "Day-based proration, computed by the engine — nothing is written until you execute"))), prev),
       h("div", { class: "stack" },
         h("div", { class: "card" }, h("div", { class: "card-h" }, h("h2", {}, "Upgrade simulator")),
           h("div", { class: "form" },
             h("label", { class: "field" }, h("span", {}, "Target plan"), target),
             h("label", { class: "field" }, h("span", {}, "Effective date"), eff),
             h("div", { class: "note" }, "proration_behavior = ", h("b", {}, "create_prorations")),
-            h("div", { class: "btns" }, h("button", { class: "btn", onclick: () => preview().catch(e => prev.replaceChildren(h("div", { class: "res err" }, e.message))) }, "Preview"), upBtn))),
+            h("div", { class: "btns" }, upBtn), result)),
         h("div", { class: "card" }, h("div", { class: "card-h" }, h("h2", {}, "Close the period")), genBtn, genOut,
           h("div", { class: "sub", style: "margin-top:8px" }, "Idempotent: generating the same period twice returns the same invoice.")),
         invCard)),
@@ -476,8 +554,8 @@ P.pricing = async () => {
   const tokens = h("input", { type: "number", value: "1500000", min: "0", step: "1000" });
   const slider = h("input", { type: "range", min: "0", max: "5000000", step: "10000", value: "1500000" });
   const tierBox = h("div"), out = h("div");
-  const presets = [500000, 1000000, 1500000, 5000000];
-  const seg = h("div", { class: "seg" }, presets.map(v => h("button", { "data-v": v, onclick: () => { tokens.value = v; slider.value = v; run(); } }, int(v / 1000) + "k")));
+  const presets = [[500000, "500k"], [1000000, "1,000k (boundary)"], [1500000, "1,500k"], [1500500, "1,500.5k (non-round)"], [5000000, "5,000k"]];
+  const seg = h("div", { class: "seg", style: "flex-wrap:wrap" }, presets.map(([v, l]) => h("button", { "data-v": v, onclick: () => { tokens.value = v; slider.value = v; run(); } }, l)));
 
   function tiers(u) {
     tierBox.replaceChildren(h("table", {},
@@ -504,7 +582,7 @@ P.pricing = async () => {
     };
     out.replaceChildren(
       h("div", { class: "note", style: "margin-bottom:14px" }, h("b", {}, `${int(p.raw_units)} tokens`), ` ÷ ${int(p.divide_by)} = `, h("b", {}, `${int(p.slab.billable_units)} billable units`),
-        p.raw_units % p.divide_by ? ` (exactly ${(p.raw_units / p.divide_by).toLocaleString("en-US")} — rated exactly, rounded once)` : ""),
+        p.raw_units % p.divide_by ? h("span", {}, ` — exactly ${(p.raw_units / p.divide_by).toLocaleString("en-US")} units are rated in micro-paise and rounded `, h("b", {}, "once"), ", at the line (Improvement 1). Pre-rounding to whole units first would overcharge.") : ""),
       h("div", { class: "grid g2" },
         card("slab", "Slab (graduated)", "Each tier bills only the units inside it"),
         card("volume", "Volume", "All units billed at the single tier the total lands in")),
@@ -548,6 +626,11 @@ P.invoices = async (id) => {
     return rows;
   });
   const pro = inv.invoice_type !== "one_off" && (f.proration_credit_paise || f.proration_charge_paise);
+  const settle = pro ? (await api("/v1/invoices?customer_id=" + inv.customer_id)).invoices
+    .find(i => i.invoice_type === "one_off" && i.subscription_id === inv.subscription_id && i.period_start >= inv.period_start && i.period_start < inv.period_end) : null;
+  const factRows = inv.invoice_type === "one_off"
+    ? [["credit", rs(f.proration_credit_paise)], ["charge", rs(f.proration_charge_paise)], ["days prorated", String(f.proration_days)], ["total", rs(f.total_paise)]]
+    : [["raw tokens", int(f.raw_tokens)], ["billable units", int(f.billed_units)], ["fixed charges", rs(f.fixed_charges_paise)], ["usage charges", rs(f.usage_charges_paise)], ["total", rs(f.total_paise)]];
   return [
     h("div", { class: "crumb" }, h("a", { href: "#/invoices" }, "Invoices"), " / ", inv.id),
     h("div", { class: "titlerow" }, h("h1", {}, "Invoice"), h("code", {}, inv.id), h("span", { class: "tag green" }, inv.status), h("span", { class: "tag " + (inv.invoice_type === "one_off" ? "amber" : "") }, inv.invoice_type === "one_off" ? "proration settlement" : "cycle")),
@@ -570,10 +653,11 @@ P.invoices = async (id) => {
           h("table", {},
             h("tr", {}, h("td", {}, `Credit · ${f.proration_days} unused days`), h("td", { class: "r num neg" }, rs(f.proration_credit_paise))),
             h("tr", {}, h("td", {}, `Charge · ${f.proration_days} remaining days`), h("td", { class: "r num" }, rs(f.proration_charge_paise))),
-            h("tr", { class: "sum" }, h("td", {}, "Net, settled at upgrade"), h("td", { class: "r num" }, rs(f.proration_credit_paise + f.proration_charge_paise))))) : null,
+            h("tr", { class: "sum" }, h("td", {}, "Net, settled at upgrade"), h("td", { class: "r num" }, rs(f.proration_credit_paise + f.proration_charge_paise)))),
+          h("div", { class: "sub", style: "margin-top:8px" }, "Not part of this invoice's total — the explanation mentions it so the customer sees the whole month. ",
+            settle ? h("a", { href: "#/invoices/" + settle.id }, "Open the settlement invoice →") : null)) : null,
         h("div", { class: "card" }, h("div", { class: "card-h" }, h("h2", {}, "Facts the explanation is built from")),
-          h("table", {}, [["raw tokens", int(f.raw_tokens)], ["billable units", int(f.billed_units)], ["fixed charges", rs(f.fixed_charges_paise)], ["usage charges", rs(f.usage_charges_paise)], ["total", rs(f.total_paise)]]
-            .map(([k, v]) => h("tr", {}, h("td", { class: "sub" }, k), h("td", { class: "r num" }, v))))))),
+          h("table", {}, factRows.map(([k, v]) => h("tr", {}, h("td", { class: "sub" }, k), h("td", { class: "r num" }, v))))))),
   ];
 };
 
@@ -594,7 +678,10 @@ P.spike = async () => {
       h("div", { class: "card-h" }, h("div", {}, h("h2", {}, s.name), h("code", {}, s.customer_id)), status),
       s.baseline_hourly_tokens ? [bar("Last hour", s.current_hour_tokens, s.spike_detected ? "hot" : "ok"), bar("Alert line", s.threshold_tokens, "thr"), bar("7-day avg / hr", s.baseline_hourly_tokens, "")] : null,
       ser ? h("div", { style: "margin-top:8px" }, lineChart([{ points: ser.points, color: s.spike_detected ? "#b3261e" : "#0d47a1" }], { height: 150, threshold: s.threshold_tokens })) : null,
-      h("div", { class: "sub", style: "margin-top:6px" }, s.message));
+      h("div", { class: "sub", style: "margin-top:6px" }, s.message),
+      !s.spike_detected && s.baseline_hourly_tokens ? h("div", { class: "btns", style: "margin-top:12px" },
+        h("button", { class: "btn red", onclick: (e) => simulateLoop(e.currentTarget, s) },
+          h("span", {}, "Simulate a runaway loop", h("small", {}, `POST ${int(s.baseline_hourly_tokens * 10)} tokens in the last hour`)))) : null);
   }));
   return [
     h("div", { class: "titlerow" }, h("span", { class: "tag" }, "Improvement 2"), h("span", { class: "tag green" }, "covered by tests/test_differentiator_explainer_spike.py")),
@@ -617,6 +704,17 @@ P.spike = async () => {
         h("div", { class: "note" }, "Alerts are flagged on the API response and logged as a warning. Pausing keys or rate-limiting is out of scope for this engine.")))
   ];
 };
+
+async function simulateLoop(btn, s) {
+  btn.disabled = true;
+  try {
+    const hl = await api("/health");
+    const ts = new Date(new Date(hl.now_iso).getTime() - 10 * 60 * 1000).toISOString().replace(".000Z", "Z");
+    await post("/v1/events", { event_id: "evt_loop_" + Math.random().toString(36).slice(2, 10), event_name: "llm_tokens",
+      customer_id: s.customer_id, timestamp: ts, properties: { total_tokens: s.baseline_hourly_tokens * 10 } });
+    route();
+  } catch (e) { btn.disabled = false; alert("Could not post the event: " + e.message); }
+}
 
 /* ---------- router ---------- */
 let TENANT = "";

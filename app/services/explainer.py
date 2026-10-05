@@ -31,6 +31,16 @@ TEMPLATE = (
     "Total Due: Rs {total_rupees} ({total_paise} paise)."
 )
 
+# A proration settlement invoice carries no usage, so the tier sentences of
+# the documented template would read "0 units at 0 paise". It gets its own
+# sentence; cycle invoices keep the GAPS.md template verbatim.
+PRORATION_TEMPLATE = (
+    "Plan change for {customer_name}: {days} unused days of the previous plan "
+    "were credited ({proration_credit} paise credited) and {days} remaining days "
+    "of the new plan were charged ({proration_charge} paise charged). "
+    "Total Due: Rs {total_rupees} ({total_paise} paise)."
+)
+
 SYSTEM_PROMPT = (
     "You are a billing-support writer for an Indian AI API company. You will be "
     "given a JSON object of VERIFIED billing facts, all amounts in integer paise "
@@ -144,6 +154,15 @@ def build_facts(tenant_id: str, invoice: dict) -> dict:
 
 def render_template(facts: dict) -> str:
     """The deterministic fallback narrative. Always available, never fails."""
+    if facts["invoice_type"] == "one_off" and not facts["raw_tokens"]:
+        return PRORATION_TEMPLATE.format(
+            customer_name=facts["customer_name"],
+            days=facts["proration_days"] if facts["proration_days"] is not None else "the",
+            proration_credit=_fmt(abs(facts["proration_credit_paise"])),
+            proration_charge=_fmt(facts["proration_charge_paise"]),
+            total_rupees=facts["total_rupees"],
+            total_paise=_fmt(facts["total_paise"]),
+        )
     return TEMPLATE.format(
         customer_name=facts["customer_name"],
         raw_tokens=_fmt(facts["raw_tokens"]),

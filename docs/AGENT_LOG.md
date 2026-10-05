@@ -103,3 +103,10 @@ Non-documentation changes made in the same pass: Windows run commands and `.cmd`
 launchers, a `pytest.ini` so a local `flexprice/` clone is never collected as tests,
 and a browser dashboard (`/app`) over new read-only views. None of these change
 billing behaviour, and all existing tests pass unchanged.
+
+One wording change in the explainer: a proration **settlement** invoice carries no
+usage, so the documented template rendered "You used 0 tokens ... Tier 1: 0 units".
+Such invoices now get a one-sentence plan-change explanation (credited days,
+charged days, total); cycle invoices keep the `GAPS.md` template verbatim. Amounts
+are unchanged and covered by
+`tests/test_differentiator_explainer_spike.py::test_settlement_explanation_does_not_narrate_zero_usage`.

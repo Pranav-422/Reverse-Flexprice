@@ -56,7 +56,7 @@ Everywhere below, read `./venv/bin/` as `venv\Scripts\` and `./scripts/x` as `sc
 ./venv/bin/python -m pytest -q
 ```
 
-Expected: **40 passed** in about two seconds.
+Expected: **41 passed** in about two seconds.
 
 ### Run the demo
 
@@ -81,15 +81,15 @@ number fetched live from the API:
 
 | Screen | What you can do on it |
 |---|---|
-| Overview | Billed total, stored event rows (1 per `event_id`), spike alerts, 7-day token chart |
+| Overview | A five-step “try it” guide, billed total, stored event rows (1 per `event_id`), spike alerts, 7-day token chart |
 | Usage Events | **Killer Test 1** live: “Send twice concurrently” fires two posts of one `event_id` 2 s apart → one `201`, one `200 duplicate_skipped`, 1 row stored |
-| Customers | **Killer Test 2** live: preview and execute a Day-15 upgrade of `c_live` (0.5000 → −₹30 + ₹60 = ₹30), then generate the period's invoice |
-| Pricing | **Killer Test 3** live: slider over tokens, slab vs volume from the engine's own rating code (1.5M tokens → ₹140 vs ₹85) |
+| Customers | **Killer Test 2** live: preview and execute a Day-15 upgrade of `c_live` (0.5000 → −₹30 + ₹60 = ₹30), then generate the period's invoice; a customer that already changed plan shows what was actually settled |
+| Pricing | **Killer Test 3** live: slider over tokens, slab vs volume from the engine's own rating code (1.5M tokens → ₹140 vs ₹85); the 1,500.5k preset shows exact sub-unit rating (₹140.03, Improvement 1) |
 | Invoices | Plain-language explanation + line items with tier and proration math (Improvement 2) |
-| Spike Monitor | Red **"Spike detected · 10× normal"** banner for `c_runaway` next to a calm `c_steady` (Improvement 2) |
+| Spike Monitor | Red **"Spike detected · 10× normal"** banner for `c_runaway` next to a calm `c_steady`; “Simulate a runaway loop” posts a burst for `c_steady` and the alert fires live (Improvement 2) |
 
 The page is plain HTML + JavaScript (no build step, no framework) over the `/v1`
-API. The read-only views it needs (`GET /v1/customers`, `/v1/plans`, `/v1/invoices`,
+API and works on a phone as well as a laptop. The read-only views it needs (`GET /v1/customers`, `/v1/plans`, `/v1/invoices`,
 `/v1/usage/recent`, `/v1/usage/hourly`, `/v1/overview`, and the two previews) live in
 `app/api/routes/dashboard.py` and never write. The original single-page explainer is
 still at `/ui`.
@@ -196,7 +196,7 @@ app/
                 subscription, explainer, spike_detector
   static/       app.html (the /app dashboard), explainer.html (/ui)
   main.py       FastAPI app + /health + /app + /ui
-tests/          3 Killer Tests + 1 Fix + 1 Differentiator + dashboard views  (40 cases)
+tests/          3 Killer Tests + 1 Fix + 1 Differentiator + dashboard views  (41 cases)
 scripts/
   demo          live step-by-step walkthrough (expected vs actual)
   ui            seeds a demo tenant and opens the /app dashboard
