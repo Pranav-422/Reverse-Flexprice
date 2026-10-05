@@ -1,0 +1,4 @@
+# Windows launchers need CRLF; the bash launchers must stay LF everywhere.
+*.cmd text eol=crlf
+scripts/demo text eol=lf
+scripts/ui text eol=lf

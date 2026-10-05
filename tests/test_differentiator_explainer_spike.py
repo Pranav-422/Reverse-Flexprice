@@ -344,3 +344,12 @@ def test_spike_status_404_for_unknown_customer(client, at_time):
     at_time("2026-04-08T00:00:00Z")
     assert client.get("/v1/customers/cust_nope/spike-status",
                       headers=TENANT_HEADER).status_code == 404
+
+
+def test_ui_page_is_served_and_reads_both_endpoints(client):
+    """The browser view (/ui) is a static page over the two endpoints above."""
+    resp = client.get("/ui")
+    assert resp.status_code == 200
+    assert resp.headers["content-type"].startswith("text/html")
+    assert "/explanation" in resp.text
+    assert "/spike-status" in resp.text

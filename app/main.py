@@ -3,8 +3,10 @@
 A clean-room rebuild driven entirely by docs/. See README.md.
 """
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI
+from fastapi.responses import FileResponse, RedirectResponse
 
 from app.api.router import api_router
 from app.core import config, time as btime
@@ -37,3 +39,20 @@ def health():
         "billing_period_minutes": config.get_int("BILLING_PERIOD_MINUTES"),
         "ai_explainer": "live" if config.ai_api_key() else "template_fallback",
     }
+
+
+@app.get("/ui", include_in_schema=False)
+def explainer_ui():
+    """Browser view of the differentiator: /ui?invoice=<id>&customers=<id>,<id>"""
+    return FileResponse(Path(__file__).parent / "static" / "explainer.html")
+
+
+@app.get("/app", include_in_schema=False)
+def dashboard_ui():
+    """Browser dashboard over the /v1 API (all six screens, live data)."""
+    return FileResponse(Path(__file__).parent / "static" / "app.html")
+
+
+@app.get("/", include_in_schema=False)
+def root():
+    return RedirectResponse("/app")

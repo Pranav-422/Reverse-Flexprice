@@ -1,0 +1,646 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Paise-Perfect</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Crect width=%2232%22 height=%2232%22 rx=%228%22 fill=%22%230d47a1%22/%3E%3Ctext x=%2216%22 y=%2223%22 font-size=%2220%22 text-anchor=%22middle%22 fill=%22white%22 font-family=%22sans-serif%22%3E%E2%82%B9%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --primary: #003178; --primary-c: #0d47a1; --primary-soft: #d9e2ff; --primary-tint: #f0f4fd;
+    --surface: #f8f9ff; --card: #ffffff; --line: #e4e8f2; --line-2: #c3c6d4;
+    --ink: #171c23; --ink-2: #434652; --muted: #737783;
+    --green: #076d2e; --green-soft: #dcf7e2; --red: #ba1a1a; --red-strong: #b3261e; --red-soft: #ffdad6;
+    --amber: #a15c00; --amber-soft: #ffe7cf;
+    --head: Manrope, system-ui, "Segoe UI", sans-serif;
+    --body: Geist, system-ui, "Segoe UI", Roboto, sans-serif;
+    --mono: "Geist Mono", ui-monospace, Consolas, monospace;
+    --r: 12px;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body { background: var(--surface); color: var(--ink); font: 13.5px/1.5 var(--body); }
+  a { color: var(--primary-c); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  button { font: inherit; cursor: pointer; }
+  code, .mono { font-family: var(--mono); font-size: 12px; }
+  .num { font-variant-numeric: tabular-nums; }
+
+  /* shell */
+  .side { position: fixed; inset: 0 auto 0 0; width: 240px; background: var(--card);
+          border-right: 1px solid var(--line); display: flex; flex-direction: column; z-index: 5; }
+  .brand { display: flex; gap: 10px; align-items: center; padding: 18px 18px 22px; }
+  .logo { width: 34px; height: 34px; border-radius: 9px; background: var(--primary-c); color: #fff;
+          display: grid; place-items: center; font: 800 17px var(--head); }
+  .brand b { font: 700 16px var(--head); display: block; color: var(--primary); }
+  .brand small { color: var(--muted); font-size: 11.5px; }
+  nav a { display: flex; align-items: center; gap: 10px; margin: 2px 10px; padding: 9px 12px;
+          border-radius: 8px; color: var(--ink-2); font-weight: 500; }
+  nav a:hover { background: var(--primary-tint); text-decoration: none; }
+  nav a.on { background: var(--primary-c); color: #fff; }
+  nav svg { width: 17px; height: 17px; flex: none; }
+  nav .pill { margin-left: auto; font-size: 11px; font-weight: 600; padding: 1px 7px; border-radius: 99px;
+              background: var(--red-soft); color: var(--red); }
+  nav a.on .pill { background: #fff; }
+  .side-foot { margin: auto 10px 12px; padding: 12px; border-radius: 10px; background: var(--primary-tint);
+               font-size: 12px; color: var(--ink-2); }
+  .side-foot b { display: block; font-size: 11px; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); }
+
+  .top { position: sticky; top: 0; z-index: 4; margin-left: 240px; height: 60px; padding: 0 28px;
+         display: flex; align-items: center; gap: 10px; background: rgba(248,249,255,.92);
+         backdrop-filter: blur(6px); border-bottom: 1px solid var(--line); }
+  .chip { display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; border-radius: 8px;
+          background: var(--card); border: 1px solid var(--line); font-size: 12.5px; color: var(--ink-2); white-space: nowrap; }
+  .chip.green { background: var(--green-soft); border-color: transparent; color: var(--green); font-weight: 600; }
+  .chip.blue { background: var(--primary-tint); border-color: transparent; color: var(--primary-c); font-weight: 600; }
+  .top .grow { flex: 1; }
+
+  main { margin-left: 240px; padding: 22px 28px 60px; max-width: 1480px; }
+  .crumb { color: var(--muted); font-size: 12.5px; margin-bottom: 4px; }
+  h1 { font: 700 26px/1.2 var(--head); color: var(--primary); margin: 0; letter-spacing: -.015em; }
+  .lede { color: var(--ink-2); margin: 6px 0 20px; max-width: 900px; }
+  .tag { display: inline-flex; align-items: center; gap: 5px; padding: 2px 8px; border-radius: 6px;
+         font-size: 11px; font-weight: 700; letter-spacing: .03em; text-transform: uppercase;
+         background: var(--primary-soft); color: var(--primary-c); vertical-align: middle; }
+  .tag.green { background: var(--green-soft); color: var(--green); }
+  .tag.red { background: var(--red-soft); color: var(--red); }
+  .tag.grey { background: #eceef4; color: var(--ink-2); }
+  .tag.amber { background: var(--amber-soft); color: var(--amber); }
+  .titlerow { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+
+  .grid { display: grid; gap: 18px; }
+  .g4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .g2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .g-main { grid-template-columns: minmax(0, 1.55fr) minmax(320px, 1fr); }
+  @media (max-width: 1150px) { .g4 { grid-template-columns: repeat(2, minmax(0,1fr)); } .g-main, .g2 { grid-template-columns: 1fr; } }
+  @media (max-width: 760px) { .side { display: none; } .top, main { margin-left: 0; } .g4 { grid-template-columns: 1fr; } }
+
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: var(--r); padding: 18px 20px;
+          box-shadow: 0 1px 3px rgba(23,28,35,.04); min-width: 0; }
+  .card h2 { font: 700 16px var(--head); margin: 0; color: var(--ink); }
+  .card h2 + .sub { margin-top: 2px; }
+  .card-h { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
+  .sub { color: var(--muted); font-size: 12.5px; }
+  .label { font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+  .kpi .v { font: 700 30px/1.15 var(--head); margin: 8px 0 4px; letter-spacing: -.02em; }
+  .kpi .v.red { color: var(--red); }
+  .stack > * + * { margin-top: 18px; }
+
+  table { width: 100%; border-collapse: collapse; }
+  th { text-align: left; font-size: 11px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase;
+       color: var(--muted); background: var(--primary-tint); padding: 9px 10px; }
+  td { padding: 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  td.r, th.r { text-align: right; }
+  tr.sum td { font-weight: 700; border-bottom: none; font-size: 15px; }
+  tr.click { cursor: pointer; }
+  tr.click:hover td { background: var(--primary-tint); }
+  .neg { color: var(--green); }
+
+  .btn { border: 1px solid var(--line-2); background: var(--card); color: var(--ink); border-radius: 8px;
+         padding: 8px 14px; font-weight: 600; font-size: 13px; display: inline-flex; gap: 6px; align-items: center; }
+  .btn:hover { background: var(--primary-tint); }
+  .btn.pri { background: var(--primary-c); border-color: var(--primary-c); color: #fff; }
+  .btn.pri:hover { background: var(--primary); }
+  .btn.red { background: var(--red-strong); border-color: var(--red-strong); color: #fff; }
+  .btn:disabled { opacity: .55; cursor: default; }
+  .btn small { display: block; font-size: 10.5px; font-weight: 500; opacity: .85; }
+  .btns { display: flex; gap: 10px; flex-wrap: wrap; }
+
+  .field { display: flex; flex-direction: column; gap: 5px; }
+  .field > span { font-size: 11px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: var(--ink-2); }
+  input, select, textarea { font: 13px var(--body); padding: 9px 11px; border-radius: 8px; border: 1px solid var(--line);
+         background: var(--primary-tint); color: var(--ink); width: 100%; min-width: 0; }
+  input:focus, select:focus { outline: 2px solid var(--primary-soft); border-color: var(--primary-c); }
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .form > * + * { margin-top: 12px; }
+
+  .note { background: var(--primary-tint); border-radius: 10px; padding: 12px 14px; color: var(--ink-2); font-size: 12.5px; }
+  .note b { color: var(--ink); }
+  .story { background: var(--primary-tint); border-left: 3px solid var(--primary-c); border-radius: 8px;
+           padding: 14px 16px; font-size: 15px; line-height: 1.6; }
+
+  .res { border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; background: var(--card); }
+  .res.ok { border-color: #9ad7a8; background: #f4fbf6; }
+  .res.dup { border-color: var(--line-2); background: #f6f7fa; }
+  .res.err { border-color: #f1b0aa; background: #fff6f5; }
+  .res dl { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; margin: 10px 0 0; font-size: 12.5px; }
+  .res dt { color: var(--muted); } .res dd { margin: 0; text-align: right; }
+
+  .alert { border-radius: var(--r); padding: 16px 18px; display: flex; gap: 14px; align-items: flex-start; }
+  .alert.hot { background: var(--red-strong); color: #fff; }
+  .alert.hot .dot { width: 11px; height: 11px; border-radius: 50%; background: #fff; margin-top: 6px; flex: none;
+                    animation: pulse 1.2s infinite; }
+  @keyframes pulse { 50% { opacity: .25; } }
+  @media (prefers-reduced-motion: reduce) { .alert.hot .dot { animation: none; } }
+  .alert h3 { margin: 0 0 2px; font: 700 17px var(--head); }
+  .alert.calm { background: var(--green-soft); color: var(--green); }
+
+  .bar-row { display: grid; grid-template-columns: 120px 1fr 80px; gap: 10px; align-items: center; font-size: 12.5px; margin: 8px 0; }
+  .track { height: 9px; border-radius: 5px; background: #eceef4; overflow: hidden; }
+  .fill { height: 100%; border-radius: 5px; background: var(--primary-c); }
+  .fill.hot { background: var(--red-strong); } .fill.thr { background: #c58a1d; } .fill.ok { background: var(--green); }
+
+  .timeline { display: flex; height: 54px; border-radius: 10px; overflow: hidden; margin: 14px 0 6px; }
+  .timeline > div { padding: 8px 12px; font-size: 12.5px; display: flex; flex-direction: column; justify-content: center; }
+  .timeline .old { background: #eceef4; color: var(--ink-2); }
+  .timeline .new { background: var(--primary-c); color: #fff; }
+  .tl-axis { display: flex; justify-content: space-between; color: var(--muted); font-size: 11.5px; }
+
+  .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+  .seg button { border: 0; background: var(--card); padding: 6px 11px; font-size: 12.5px; color: var(--ink-2); }
+  .seg button.on { background: var(--primary-c); color: #fff; }
+  input[type=range] { padding: 0; background: none; border: 0; accent-color: var(--primary-c); }
+  .big { font: 700 34px/1.1 var(--head); letter-spacing: -.02em; }
+  .empty { color: var(--muted); padding: 18px 0; text-align: center; }
+  .err { color: var(--red); }
+  .foot { margin-top: 22px; display: flex; gap: 12px; align-items: center; }
+  svg.chart text { font: 10.5px var(--body); fill: var(--muted); }
+</style>
+</head>
+<body>
+<aside class="side">
+  <div class="brand"><div class="logo">₹</div><div><b>Paise-Perfect</b><small>Usage billing engine</small></div></div>
+  <nav id="nav"></nav>
+  <div class="side-foot"><b>Storage</b>SQLite · integer paise · UNIQUE(tenant_id, event_id)</div>
+</aside>
+<header class="top">
+  <span class="chip" id="tenant">tenant</span>
+  <span class="grow"></span>
+  <span class="chip" id="ai"></span>
+  <span class="chip blue" id="clock" title="BILLING_NOW — the engine's injected clock">clock</span>
+</header>
+<main id="view"></main>
+
+<script>
+/* ---------- helpers ---------- */
+const $ = (s) => document.querySelector(s);
+function h(tag, attrs, ...kids) {
+  const e = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs || {})) {
+    if (v == null || v === false) continue;
+    if (k === "class") e.className = v;
+    else if (k.startsWith("on")) e.addEventListener(k.slice(2), v);
+    else if (k === "style") e.style.cssText = v;
+    else e.setAttribute(k, v === true ? "" : v);
+  }
+  for (const k of kids.flat(Infinity)) if (k != null && k !== false) e.append(k instanceof Node ? k : String(k));
+  return e;
+}
+const int = (n) => Number(n || 0).toLocaleString("en-US");
+const rs = (p) => { const n = Number(p || 0); return (n < 0 ? "−₹" : "₹") + (Math.abs(n) / 100).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }); };
+const day = (iso) => iso ? new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" }) : "—";
+const dt = (iso) => iso ? iso.replace("T", " ").replace("Z", " UTC") : "—";
+const short = (id) => id && id.length > 14 ? id.slice(0, 8) + "…" + id.slice(-4) : id;
+
+async function api(path, opts = {}) {
+  const r = await fetch(path, { headers: { "Content-Type": "application/json" }, ...opts });
+  let body = null; try { body = await r.json(); } catch {}
+  if (!r.ok && !opts.raw) throw new Error((body && body.detail) || r.status + " " + r.statusText);
+  return opts.raw ? { status: r.status, body } : body;
+}
+const post = (path, body, raw) => api(path, { method: "POST", body: JSON.stringify(body), raw });
+
+const ICONS = {
+  overview: "M3 3h8v8H3zM13 3h8v5h-8zM13 10h8v11h-8zM3 13h8v8H3z",
+  events: "M13 2 4 14h7l-1 8 9-12h-7z",
+  customers: "M16 11a4 4 0 1 0-8 0 4 4 0 0 0 8 0zM3 21c1-4 5-6 9-6s8 2 9 6",
+  pricing: "M4 20V10M10 20V4M16 20v-7M22 20H2",
+  invoices: "M6 2h9l5 5v15H6zM14 2v6h6M9 13h8M9 17h8",
+  spike: "M3 17l5-5 4 4 8-9M14 7h6v6",
+};
+const PAGES = [["overview", "Overview"], ["events", "Usage Events"], ["customers", "Customers"],
+               ["pricing", "Pricing"], ["invoices", "Invoices"], ["spike", "Spike Monitor"]];
+let spikeCount = 0;
+
+function icon(d) {
+  const NS = "http://www.w3.org/2000/svg", svg = document.createElementNS(NS, "svg"), p = document.createElementNS(NS, "path");
+  for (const [k, v] of Object.entries({ viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", "stroke-width": "1.8", "stroke-linejoin": "round", "stroke-linecap": "round" })) svg.setAttribute(k, v);
+  p.setAttribute("d", d); svg.append(p); return svg;
+}
+function renderNav(cur) {
+  $("#nav").replaceChildren(...PAGES.map(([k, label]) =>
+    h("a", { href: "#/" + k, class: cur === k ? "on" : null },
+      icon(ICONS[k]),
+      label, k === "spike" && spikeCount ? h("span", { class: "pill" }, spikeCount + " active") : null)));
+}
+
+async function refreshTop() {
+  try {
+    const hl = await api("/health");
+    $("#clock").textContent = "Server clock " + dt(hl.now_iso);
+    $("#ai").textContent = hl.ai_explainer === "live" ? "AI explainer: live" : "AI explainer: template (no key)";
+  } catch {}
+}
+
+/* ---------- tiny SVG line chart ---------- */
+function lineChart(series, { height = 220, threshold = null } = {}) {
+  const NS = "http://www.w3.org/2000/svg";
+  const W = 760, H = height, L = 46, R = 12, T = 14, B = 26;
+  const n = series[0].points.length;
+  const max = Math.max(1, threshold || 0, ...series.flatMap(s => s.points.map(p => p.tokens))) * 1.12;
+  const x = (i) => L + (i / Math.max(1, n - 1)) * (W - L - R);
+  const y = (v) => T + (1 - v / max) * (H - T - B);
+  const svg = document.createElementNS(NS, "svg");
+  svg.setAttribute("viewBox", `0 0 ${W} ${H}`); svg.setAttribute("class", "chart");
+  svg.setAttribute("width", "100%"); svg.setAttribute("role", "img");
+  const el = (t, a) => { const e = document.createElementNS(NS, t); for (const k in a) e.setAttribute(k, a[k]); svg.append(e); return e; };
+  for (let g = 0; g <= 4; g++) {
+    const v = (max / 1.12) * g / 4, yy = y(v);
+    el("line", { x1: L, x2: W - R, y1: yy, y2: yy, stroke: "#e4e8f2" });
+    el("text", { x: L - 6, y: yy + 3, "text-anchor": "end" }).textContent = int(Math.round(v));
+  }
+  for (let i = 0; i < n; i += 24) {
+    el("text", { x: x(i), y: H - 8, "text-anchor": "middle" }).textContent = day(series[0].points[i].hour_start_iso).replace(/ \d{4}$/, "");
+  }
+  if (threshold) {
+    el("line", { x1: L, x2: W - R, y1: y(threshold), y2: y(threshold), stroke: "#c58a1d", "stroke-dasharray": "5 4", "stroke-width": 1.5 });
+    el("text", { x: W - R, y: y(threshold) - 5, "text-anchor": "end", style: "fill:#a15c00;font-weight:600" }).textContent = `alert line ${int(threshold)}/hr`;
+  }
+  for (const s of series) {
+    el("polyline", { points: s.points.map((p, i) => `${x(i)},${y(p.tokens)}`).join(" "), fill: "none", stroke: s.color, "stroke-width": 2, "stroke-linejoin": "round" });
+    const last = s.points[n - 1];
+    el("circle", { cx: x(n - 1), cy: y(last.tokens), r: 4, fill: s.color });
+  }
+  return svg;
+}
+const legend = (series) => h("div", { class: "btns", style: "font-size:12px;color:var(--ink-2)" },
+  series.map(s => h("span", {}, h("span", { style: `display:inline-block;width:10px;height:10px;border-radius:3px;background:${s.color};margin-right:6px` }), s.name)));
+
+/* ---------- pages ---------- */
+const P = {};
+
+P.overview = async () => {
+  const [o, inv, cust] = await Promise.all([api("/v1/overview"), api("/v1/invoices"), api("/v1/customers")]);
+  const watch = cust.customers.filter(c => !c.subscription_id).map(c => c.id).slice(0, 2);
+  const hot = o.active_spikes[0];
+  const series = await Promise.all(watch.map(id => api(`/v1/usage/hourly?customer_id=${id}&hours=168`)));
+  const colors = ["#b3261e", "#0d47a1", "#076d2e"];
+  const sp = hot ? await api(`/v1/customers/${hot.customer_id}/spike-status`) : null;
+  return [
+    h("div", { class: "titlerow" }, h("h1", {}, "Overview"), h("span", { class: "tag grey" }, "tenant " + (TENANT || "default"))),
+    h("p", { class: "lede" }, "Live numbers from this engine's SQLite store. Every amount is an integer number of paise."),
+    h("div", { class: "grid g4" },
+      kpi("Billed (finalized invoices)", rs(o.billed_paise), `${o.finalized_invoices} invoice${o.finalized_invoices === 1 ? "" : "s"}`),
+      kpi("Event rows stored", int(o.event_rows), o.event_rows === o.distinct_event_ids ? h("span", { class: "tag green" }, "1 row per event_id") : `${int(o.distinct_event_ids)} distinct ids`),
+      kpi("Customers", int(o.customers), "in this tenant"),
+      kpi("Active spike alerts", String(o.active_spikes.length), hot ? h("a", { href: "#/spike" }, `${hot.customer_id} at ${hot.ratio}× →`) : "all within threshold", o.active_spikes.length ? "red" : "")),
+    h("div", { class: "grid g-main", style: "margin-top:18px" },
+      h("div", { class: "card" },
+        h("div", { class: "card-h" }, h("div", {}, h("h2", {}, "Tokens per hour, last 7 days"), h("div", { class: "sub" }, "Customers without a subscription — the spike-monitor demo pair")),
+          legend(series.map((s, i) => ({ name: s.customer_id, color: colors[i] })))),
+        series.length ? lineChart(series.map((s, i) => ({ points: s.points, color: colors[i] })), { threshold: sp ? sp.threshold_tokens : null }) : h("div", { class: "empty" }, "No usage yet"),
+        sp ? h("div", { class: "note", style: "margin-top:10px" }, h("b", {}, `${sp.customer_id}: `), sp.message) : null),
+      h("div", { class: "card" },
+        h("div", { class: "card-h" }, h("div", {}, h("h2", {}, "Recent invoices"), h("div", { class: "sub" }, "Click a row for the plain-language explanation")), h("a", { href: "#/invoices" }, "All →")),
+        invoiceTable(inv.invoices.slice(0, 6), true))),
+    h("div", { class: "card foot" }, h("span", { class: "tag" }, "precision"),
+      h("div", {}, h("b", {}, "Every amount is an integer in paise. Unit rates are stored in micro-paise (1 paise = 10,000 µp). "),
+        "Rounding happens once, half-up, at the invoice line — so ₹0.002/token over ten 1-token requests bills 2 paise, not 0.")),
+  ];
+};
+function kpi(label, value, foot, cls) {
+  return h("div", { class: "card kpi" }, h("div", { class: "label" }, label), h("div", { class: "v num " + (cls || "") }, value), h("div", { class: "sub" }, foot));
+}
+function invoiceTable(rows, compact) {
+  if (!rows.length) return h("div", { class: "empty" }, "No invoices yet");
+  return h("table", {},
+    h("tr", {}, h("th", {}, "Invoice"), h("th", {}, "Customer"), compact ? null : h("th", {}, "Period"), h("th", {}, "Type"), h("th", { class: "r" }, "Amount")),
+    rows.map(r => h("tr", { class: "click", onclick: () => location.hash = "#/invoices/" + r.id },
+      h("td", {}, h("code", {}, compact ? short(r.id) : r.id)), h("td", {}, r.customer_name),
+      compact ? null : h("td", { class: "sub" }, r.invoice_type === "one_off" ? day(r.period_start_iso) : `${day(r.period_start_iso)} – ${day(r.period_end_iso)}`),
+      h("td", {}, h("span", { class: "tag " + (r.invoice_type === "one_off" ? "amber" : "") }, r.invoice_type === "one_off" ? "proration" : "cycle")),
+      h("td", { class: "r num" }, h("b", {}, rs(r.amount_due_paise))))));
+}
+
+P.events = async () => {
+  const [cust, recent, hl] = await Promise.all([api("/v1/customers"), api("/v1/usage/recent?limit=12"), api("/health")]);
+  const now = hl.now_iso;
+  const f = {
+    id: h("input", { value: "evt_retry_10" }),
+    name: h("input", { value: "llm_tokens" }),
+    cust: h("select", {}, cust.customers.map(c => h("option", { value: c.id, selected: c.id === "c_live" }, `${c.id} (${c.name})`))),
+    ts: h("input", { value: now }),
+    tokens: h("input", { type: "number", value: "50000", min: "0" }),
+  };
+  const out = h("div", { class: "stack" }, h("div", { class: "empty" }, "Send an event to see what the engine stores."));
+  const tbody = h("tbody");
+  const fillRecent = (rows) => tbody.replaceChildren(...rows.map(e => h("tr", {},
+    h("td", {}, h("code", {}, e.event_id)), h("td", {}, e.customer_id), h("td", {}, e.event_name),
+    h("td", { class: "r num" }, int(e.quantity)), h("td", { class: "r num" }, (e.quantity / 1000).toLocaleString("en-US", { maximumFractionDigits: 3 })),
+    h("td", { class: "sub" }, dt(e.timestamp_iso)))));
+  fillRecent(recent.events);
+  const total = h("span", { class: "tag grey" }, int(recent.total_rows) + " rows stored");
+
+  const body = (ts) => ({ event_id: f.id.value.trim(), event_name: f.name.value.trim(), customer_id: f.cust.value,
+    timestamp: ts, properties: { total_tokens: Number(f.tokens.value) } });
+  const shift = (iso, s) => new Date(new Date(iso).getTime() + s * 1000).toISOString().replace(".000Z", "Z");
+
+  async function send(twice) {
+    const ts = f.ts.value.trim();
+    const calls = twice ? [post("/v1/events", body(ts), true), post("/v1/events", body(shift(ts, 2)), true)]
+                        : [post("/v1/events", body(ts), true)];
+    const res = await Promise.all(calls);
+    const rows = await api("/v1/events?event_id=" + encodeURIComponent(f.id.value.trim()));
+    out.replaceChildren(
+      h("div", { class: "grid " + (twice ? "g2" : ""), style: "gap:12px" }, res.map((r, i) => resultCard(r, i, twice ? (i ? shift(ts, 2) : ts) : ts))),
+      h("div", { class: "note" }, h("b", {}, `Rows stored for ${f.id.value.trim()}: ${rows.count}. `),
+        twice ? "Both requests raced on the same event_id with timestamps 2 s apart. The database's UNIQUE(tenant_id, event_id) index let exactly one INSERT win; there is no cache TTL and the timestamp is not part of the key."
+              : "Send the same event_id again (or use “Send twice concurrently”) to see the duplicate rejected."));
+    const r2 = await api("/v1/usage/recent?limit=12"); fillRecent(r2.events); total.textContent = int(r2.total_rows) + " rows stored";
+  }
+  const sendBtn = h("button", { class: "btn", onclick: () => send(false).catch(showErr) }, "Send single");
+  const twiceBtn = h("button", { class: "btn pri", onclick: () => send(true).catch(showErr) }, h("span", {}, "Send twice concurrently", h("small", {}, "same event_id, +2 s timestamp")));
+  const showErr = (e) => out.replaceChildren(h("div", { class: "res err" }, e.message));
+  const units = () => (Number(f.tokens.value || 0) / 1000).toLocaleString("en-US", { maximumFractionDigits: 3 });
+  const unitsEl = h("b", {}, units()); f.tokens.addEventListener("input", () => unitsEl.textContent = units());
+
+  return [
+    h("div", { class: "titlerow" }, h("span", { class: "tag" }, "Killer Test 1"), h("span", { class: "tag green" }, "covered by tests/test_killer_1_dedup.py")),
+    h("h1", { style: "margin-top:8px" }, "Idempotent usage ingestion"),
+    h("p", { class: "lede" }, "POST /v1/events performs one atomic INSERT. A repeated event_id is caught by the database's unique index and answered with 200 duplicate_skipped — even under concurrency, even with a changed timestamp."),
+    h("div", { class: "grid g-main" },
+      h("div", { class: "card" },
+        h("div", { class: "card-h" }, h("div", {}, h("h2", {}, "Send a usage event"), h("div", { class: "sub" }, "POST /v1/events"))),
+        h("div", { class: "form" },
+          h("label", { class: "field" }, h("span", {}, "event_id (idempotency key)"), f.id),
+          h("div", { class: "row2" }, h("label", { class: "field" }, h("span", {}, "event_name"), f.name), h("label", { class: "field" }, h("span", {}, "customer_id"), f.cust)),
+          h("div", { class: "row2" }, h("label", { class: "field" }, h("span", {}, "timestamp"), f.ts), h("label", { class: "field" }, h("span", {}, "properties.total_tokens"), f.tokens)),
+          h("div", { class: "note" }, "Meter ", h("b", {}, "LLM Inference Tokens"), ": SUM(total_tokens) ÷ 1,000 = billable units → this event is ", unitsEl, " units."),
+          h("div", { class: "btns" }, sendBtn, twiceBtn))),
+      h("div", { class: "card" }, h("div", { class: "card-h" }, h("h2", {}, "What the engine returned")), out)),
+    h("div", { class: "card", style: "margin-top:18px" },
+      h("div", { class: "card-h" }, h("h2", {}, "Most recently ingested"), total),
+      h("table", {}, h("thead", {}, h("tr", {}, h("th", {}, "event_id"), h("th", {}, "Customer"), h("th", {}, "Event"), h("th", { class: "r" }, "Tokens"), h("th", { class: "r" }, "Units"), h("th", {}, "Timestamp"))), tbody)),
+  ];
+};
+function resultCard(r, i, ts) {
+  const ok = r.status === 201, dup = r.body && r.body.status === "duplicate_skipped";
+  return h("div", { class: "res " + (ok ? "ok" : dup ? "dup" : "err") },
+    h("div", { class: "card-h", style: "margin:0" }, h("b", {}, `Request #${i + 1}`),
+      h("span", { class: "tag " + (ok ? "green" : dup ? "grey" : "red") }, `${r.status} ${r.body ? r.body.status || "" : ""}`)),
+    h("dl", {}, h("dt", {}, "timestamp"), h("dd", {}, h("code", {}, ts)),
+      ok ? [h("dt", {}, "recorded tokens"), h("dd", { class: "num" }, int(r.body.recorded_quantity))] : null,
+      h("dt", {}, "message"), h("dd", {}, (r.body && (r.body.message || r.body.detail)) || (ok ? "stored" : ""))));
+}
+
+P.customers = async (id) => {
+  const cust = await api("/v1/customers");
+  if (!id) return [
+    h("h1", {}, "Customers"), h("p", { class: "lede" }, "Click a customer to preview or run a mid-cycle upgrade and generate invoices."),
+    h("div", { class: "card" }, h("table", {},
+      h("tr", {}, h("th", {}, "Customer"), h("th", {}, "ID"), h("th", {}, "Plan"), h("th", {}, "Current period")),
+      cust.customers.map(c => h("tr", { class: "click", onclick: () => location.hash = "#/customers/" + c.id },
+        h("td", {}, h("b", {}, c.name)), h("td", {}, h("code", {}, c.id)),
+        h("td", {}, c.plan_name ? h("span", { class: "tag" }, c.plan_name) : h("span", { class: "sub" }, "no subscription")),
+        h("td", { class: "sub" }, c.current_period_start ? `${day(iso(c.current_period_start))} – ${day(iso(c.current_period_end))}` : "—"))))),
+  ];
+  const c = cust.customers.find(x => x.id === id);
+  if (!c) throw new Error("customer " + id + " not found");
+  const [plans, invs] = await Promise.all([api("/v1/plans"), api("/v1/invoices?customer_id=" + id)]);
+  const head = [h("div", { class: "crumb" }, h("a", { href: "#/customers" }, "Customers"), " / ", c.id),
+    h("div", { class: "titlerow" }, h("h1", {}, c.name), h("span", { class: "tag grey" }, c.external_id), c.plan_name ? h("span", { class: "tag" }, c.plan_name) : null)];
+  const invCard = h("div", { class: "card" }, h("div", { class: "card-h" }, h("h2", {}, "Invoices")), invoiceTable(invs.invoices, true));
+  if (!c.subscription_id) return [...head, h("p", { class: "lede" }, "This customer has usage but no subscription — it exists for the spike-monitor demo."), invCard];
+
+  const others = plans.plans.filter(p => p.id !== c.plan_id);
+  const fixed = (p) => p.prices.filter(x => x.type === "fixed").reduce((a, x) => a + x.fixed_amount_paise, 0);
+  const curPlan = plans.plans.find(p => p.id === c.plan_id);
+  const target = h("select", {}, others.map(p => h("option", { value: p.id }, `${p.name} (${rs(fixed(p))}/mo)`)));
+  const eff = h("input", { value: iso(c.current_period_start + 15 * 86400) });
+  const prev = h("div", {}, h("div", { class: "empty" }, "Choose a target plan and date, then Preview."));
+  const result = h("div");
+  const upBtn = h("button", { class: "btn pri", disabled: !others.length }, "Execute upgrade");
+
+  async function preview() {
+    const p = await api(`/v1/subscriptions/${c.subscription_id}/upgrade-preview?target_plan_id=${target.value}&effective_date=${encodeURIComponent(eff.value)}`);
+    const pct = (p.total_days - p.remaining_days) / p.total_days * 100;
+    const tp = plans.plans.find(x => x.id === p.target_plan_id);
+    prev.replaceChildren(
+      h("div", { class: "timeline" },
+        h("div", { class: "old", style: `width:${pct}%` }, h("b", {}, curPlan.name), `${p.total_days - p.remaining_days} days served`),
+        h("div", { class: "new", style: `width:${100 - pct}%` }, h("b", {}, tp.name), `${p.remaining_days} days remaining`)),
+      h("div", { class: "tl-axis" }, h("span", {}, day(p.period_start_iso)), h("span", {}, "upgrade " + day(p.effective_date_iso)), h("span", {}, day(p.period_end_iso))),
+      h("table", { style: "margin-top:14px" },
+        h("tr", {}, h("th", {}, "Component"), h("th", { class: "r" }, "Coefficient"), h("th", { class: "r" }, "Amount")),
+        h("tr", {}, h("td", {}, h("b", {}, "Credit for unused " + curPlan.name), h("div", { class: "sub" }, `${rs(p.old_plan_paise)} × ${p.remaining_days}/${p.total_days}`)), h("td", { class: "r num" }, p.coefficient), h("td", { class: "r num neg" }, rs(p.credit_paise))),
+        h("tr", {}, h("td", {}, h("b", {}, "Charge for remaining " + tp.name), h("div", { class: "sub" }, `${rs(p.new_plan_paise)} × ${p.remaining_days}/${p.total_days}`)), h("td", { class: "r num" }, p.coefficient), h("td", { class: "r num" }, rs(p.charge_paise))),
+        h("tr", { class: "sum" }, h("td", {}, "Net due at upgrade"), h("td", {}), h("td", { class: "r num" }, rs(p.net_paise)))),
+      h("div", { class: "note", style: "margin-top:12px" }, `Coefficient = ${p.remaining_days} remaining days ÷ ${p.total_days} = ${p.coefficient}. Settled on its own invoice at upgrade time; the cycle invoice is not touched.`));
+  }
+  upBtn.onclick = async () => {
+    upBtn.disabled = true;
+    try {
+      const r = await post(`/v1/subscriptions/${c.subscription_id}/upgrade`, { target_plan_id: target.value, proration_behavior: "create_prorations", effective_date: eff.value });
+      const s = r.settlement_invoice;
+      result.replaceChildren(h("div", { class: "res ok", style: "margin-top:12px" }, h("b", {}, "Upgraded. "), "Settlement invoice ",
+        h("a", { href: "#/invoices/" + s.id }, h("code", {}, s.id)), ` for ${rs(s.amount_due_paise)} (coefficient ${r.proration.coefficient}).`));
+      setTimeout(() => route(), 900);
+    } catch (e) { result.replaceChildren(h("div", { class: "res err", style: "margin-top:12px" }, e.message)); upBtn.disabled = false; }
+  };
+  const genOut = h("div");
+  const genBtn = h("button", { class: "btn", onclick: async () => {
+    try {
+      const inv = await post("/v1/invoices/generate", { subscription_id: c.subscription_id, period_start: iso(c.current_period_start), period_end: iso(c.current_period_end) });
+      location.hash = "#/invoices/" + inv.id;
+    } catch (e) { genOut.replaceChildren(h("div", { class: "res err", style: "margin-top:10px" }, e.message)); }
+  } }, "Generate invoice for current period");
+
+  target.onchange = eff.onchange = () => preview().catch(e => prev.replaceChildren(h("div", { class: "res err" }, e.message)));
+  if (others.length) target.onchange();
+  return [...head,
+    h("p", { class: "lede" }, `Subscription `, h("code", {}, c.subscription_id), ` · period ${day(iso(c.current_period_start))} – ${day(iso(c.current_period_end))}`),
+    h("div", { class: "titlerow", style: "margin-bottom:12px" }, h("span", { class: "tag" }, "Killer Test 2"), h("span", { class: "tag green" }, "covered by tests/test_killer_2_proration.py")),
+    h("div", { class: "grid g-main" },
+      h("div", { class: "card" }, h("div", { class: "card-h" }, h("div", {}, h("h2", {}, "Mid-cycle upgrade"), h("div", { class: "sub" }, "Day-based proration, computed by the engine"))), prev, result),
+      h("div", { class: "stack" },
+        h("div", { class: "card" }, h("div", { class: "card-h" }, h("h2", {}, "Upgrade simulator")),
+          h("div", { class: "form" },
+            h("label", { class: "field" }, h("span", {}, "Target plan"), target),
+            h("label", { class: "field" }, h("span", {}, "Effective date"), eff),
+            h("div", { class: "note" }, "proration_behavior = ", h("b", {}, "create_prorations")),
+            h("div", { class: "btns" }, h("button", { class: "btn", onclick: () => preview().catch(e => prev.replaceChildren(h("div", { class: "res err" }, e.message))) }, "Preview"), upBtn))),
+        h("div", { class: "card" }, h("div", { class: "card-h" }, h("h2", {}, "Close the period")), genBtn, genOut,
+          h("div", { class: "sub", style: "margin-top:8px" }, "Idempotent: generating the same period twice returns the same invoice.")),
+        invCard)),
+  ];
+};
+const iso = (epoch) => new Date(epoch * 1000).toISOString().replace(".000Z", "Z");
+
+P.pricing = async () => {
+  const plans = await api("/v1/plans");
+  const usage = plans.plans.flatMap(p => p.prices.filter(x => x.type === "usage").map(x => ({ ...x, plan: p.name })));
+  if (!usage.length) return [h("h1", {}, "Pricing"), h("div", { class: "empty" }, "No usage prices configured")];
+  const sel = h("select", {}, usage.map(u => h("option", { value: u.id }, `${u.plan} — ${u.display_name || u.meter_name}`)));
+  const tokens = h("input", { type: "number", value: "1500000", min: "0", step: "1000" });
+  const slider = h("input", { type: "range", min: "0", max: "5000000", step: "10000", value: "1500000" });
+  const tierBox = h("div"), out = h("div");
+  const presets = [500000, 1000000, 1500000, 5000000];
+  const seg = h("div", { class: "seg" }, presets.map(v => h("button", { "data-v": v, onclick: () => { tokens.value = v; slider.value = v; run(); } }, int(v / 1000) + "k")));
+
+  function tiers(u) {
+    tierBox.replaceChildren(h("table", {},
+      h("tr", {}, h("th", {}, "Tier"), h("th", {}, "Range (units)"), h("th", { class: "r" }, "Unit price"), h("th", { class: "r" }, "Flat fee")),
+      u.tiers.map((t, i) => h("tr", {}, h("td", {}, h("b", {}, "Tier " + (i + 1))),
+        h("td", {}, (i ? int(u.tiers[i - 1].up_to_units + 1) : "0") + (t.up_to_units == null ? "+" : " – " + int(t.up_to_units))),
+        h("td", { class: "r num" }, `${t.unit_amount_micro_paise / 10000} paise (${int(t.unit_amount_micro_paise)} µp)`),
+        h("td", { class: "r num" }, rs(t.flat_amount_paise))))),
+      h("div", { class: "note", style: "margin-top:10px" }, h("b", {}, "Boundaries are inclusive: "), `exactly ${int(u.tiers[0].up_to_units)} units stays in Tier 1. 1 unit = ${int(u.divide_by)} tokens.`));
+  }
+  async function run() {
+    const u = usage.find(x => x.id === sel.value);
+    for (const b of seg.children) b.className = Number(b.dataset.v) === Number(tokens.value) ? "on" : "";
+    const p = await api(`/v1/prices/${u.id}/preview?raw_units=${Math.max(0, Math.floor(Number(tokens.value) || 0))}`);
+    const card = (mode, title, desc) => {
+      const r = p[mode];
+      return h("div", { class: "card", style: `border-top:4px solid ${mode === "slab" ? "var(--primary-c)" : "var(--line-2)"}` },
+        h("div", { class: "card-h" }, h("div", {}, h("h2", {}, title), h("div", { class: "sub" }, desc)), mode === p.configured_mode ? h("span", { class: "tag green" }, "this price's mode") : null),
+        h("div", { class: "label" }, "Total"), h("div", { class: "big num", style: "margin:4px 0 14px" }, rs(r.amount_paise)),
+        h("table", {}, r.tiers.map(t => h("tr", {},
+          h("td", {}, h("b", {}, "Tier " + (t.tier_index + 1)), h("div", { class: "sub" }, `${int(t.units)} units × ${t.unit_amount_micro_paise / 10000} p + ${rs(t.flat_amount_paise)} flat`)),
+          h("td", { class: "r num" }, rs(t.cost_paise)))),
+          h("tr", { class: "sum" }, h("td", {}, "Total"), h("td", { class: "r num" }, rs(r.amount_paise)))));
+    };
+    out.replaceChildren(
+      h("div", { class: "note", style: "margin-bottom:14px" }, h("b", {}, `${int(p.raw_units)} tokens`), ` ÷ ${int(p.divide_by)} = `, h("b", {}, `${int(p.slab.billable_units)} billable units`),
+        p.raw_units % p.divide_by ? ` (exactly ${(p.raw_units / p.divide_by).toLocaleString("en-US")} — rated exactly, rounded once)` : ""),
+      h("div", { class: "grid g2" },
+        card("slab", "Slab (graduated)", "Each tier bills only the units inside it"),
+        card("volume", "Volume", "All units billed at the single tier the total lands in")),
+      h("div", { class: "card", style: "margin-top:18px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap" },
+        h("div", {}, h("h2", {}, "Difference"), h("div", { class: "sub" }, "Same usage, same tier table, different tier mode")),
+        h("div", { class: "big num" }, rs(p.slab.amount_paise - p.volume.amount_paise))));
+  }
+  sel.onchange = () => { tiers(usage.find(x => x.id === sel.value)); run(); };
+  tokens.oninput = () => { slider.value = tokens.value; run(); };
+  slider.oninput = () => { tokens.value = slider.value; run(); };
+  tiers(usage[0]); run();
+  return [
+    h("div", { class: "titlerow" }, h("span", { class: "tag" }, "Killer Test 3"), h("span", { class: "tag green" }, "covered by tests/test_killer_3_tiered.py")),
+    h("h1", { style: "margin-top:8px" }, "Tiered pricing: slab vs volume"),
+    h("p", { class: "lede" }, "Each preview calls the engine's own rating function (GET /v1/prices/{id}/preview), the same code the invoice uses."),
+    h("div", { class: "grid g-main" },
+      h("div", { class: "card" }, h("div", { class: "card-h" }, h("h2", {}, "Tier table")), h("label", { class: "field", style: "margin-bottom:12px" }, h("span", {}, "Usage price"), sel), tierBox),
+      h("div", { class: "card" }, h("div", { class: "card-h" }, h("h2", {}, "Usage")),
+        h("div", { class: "form" }, h("label", { class: "field" }, h("span", {}, "Tokens used"), tokens), slider, seg))),
+    h("div", { style: "margin-top:18px" }, out),
+  ];
+};
+
+P.invoices = async (id) => {
+  if (!id) {
+    const inv = await api("/v1/invoices");
+    return [h("h1", {}, "Invoices"), h("p", { class: "lede" }, "Cycle invoices and proration settlement invoices. Click one for the plain-language explanation."),
+      h("div", { class: "card" }, invoiceTable(inv.invoices, false))];
+  }
+  const [inv, x] = await Promise.all([api("/v1/invoices/" + id), api(`/v1/invoices/${id}/explanation`)]);
+  const f = x.facts, isAI = x.source === "ai";
+  const lines = inv.line_items.map(li => {
+    const m = li.metadata || {};
+    let how = "";
+    if (m.charge_type === "usage") how = `${int(m.raw_units)} tokens ÷ ${int(m.divide_by)} = ${int(m.billed_units)} units · ${m.tier_mode}`;
+    else if (m.charge_type === "fixed") how = "recurring plan fee";
+    else if (m.charge_type === "proration_credit" || m.charge_type === "proration_charge") how = `${rs(m.full_period_paise)} × ${m.coefficient_numerator}/${m.coefficient_denominator}`;
+    const rows = [h("tr", {}, h("td", {}, h("b", {}, li.description), how ? h("div", { class: "sub" }, how) : null), h("td", { class: "r num" + (li.amount_paise < 0 ? " neg" : "") }, rs(li.amount_paise)))];
+    if (m.charge_type === "usage" && m.tiers) for (const t of m.tiers) rows.push(h("tr", {},
+      h("td", { style: "padding-left:26px" }, `Tier ${t.tier_index + 1}: ${int(t.units)} units × ${t.unit_amount_micro_paise / 10000} p + ${rs(t.flat_amount_paise)} flat`), h("td", { class: "r num sub" }, rs(t.cost_paise))));
+    return rows;
+  });
+  const pro = inv.invoice_type !== "one_off" && (f.proration_credit_paise || f.proration_charge_paise);
+  return [
+    h("div", { class: "crumb" }, h("a", { href: "#/invoices" }, "Invoices"), " / ", inv.id),
+    h("div", { class: "titlerow" }, h("h1", {}, "Invoice"), h("code", {}, inv.id), h("span", { class: "tag green" }, inv.status), h("span", { class: "tag " + (inv.invoice_type === "one_off" ? "amber" : "") }, inv.invoice_type === "one_off" ? "proration settlement" : "cycle")),
+    h("div", { class: "card", style: "margin-top:16px;display:flex;gap:28px;flex-wrap:wrap;align-items:flex-end" },
+      h("div", {}, h("div", { class: "label" }, "Customer"), h("div", { style: "font:700 17px var(--head);margin-top:4px" }, f.customer_name), h("code", {}, inv.customer_id)),
+      h("div", {}, h("div", { class: "label" }, "Period"), h("div", { style: "margin-top:4px" }, inv.invoice_type === "one_off" ? day(inv.period_start_iso) : `${day(inv.period_start_iso)} – ${day(inv.period_end_iso)}`)),
+      h("div", { style: "margin-left:auto;text-align:right" }, h("div", { class: "label" }, "Amount due"), h("div", { class: "big num" }, rs(inv.amount_due_paise)))),
+    h("div", { class: "card", style: "margin-top:18px;border-left:4px solid var(--primary-c)" },
+      h("div", { class: "card-h" }, h("div", {}, h("h2", {}, "Your bill, in plain words"), h("div", { class: "sub" }, "GET /v1/invoices/{id}/explanation")),
+        h("span", { class: "tag " + (isAI ? "" : "grey") }, isAI ? "written by AI · " + x.ai_model : "deterministic template — no AI key needed")),
+      h("div", { class: "story" }, x.explanation),
+      x.ai_error ? h("div", { class: "sub", style: "margin-top:8px" }, "AI unavailable, fell back safely: " + x.ai_error) : null,
+      h("div", { class: "sub", style: "margin-top:8px" }, "Every number above is computed locally from the sealed invoice. The AI, when enabled, only rewords it — an AI failure changes the wording, never the money.")),
+    h("div", { class: "grid g-main", style: "margin-top:18px" },
+      h("div", { class: "card" }, h("div", { class: "card-h" }, h("h2", {}, "Line items"), h("span", { class: "sub" }, "INR · integer paise")),
+        h("table", {}, h("tr", {}, h("th", {}, "Description"), h("th", { class: "r" }, "Amount")), lines,
+          h("tr", { class: "sum" }, h("td", {}, "Total due"), h("td", { class: "r num" }, rs(inv.amount_due_paise))))),
+      h("div", { class: "stack" },
+        pro ? h("div", { class: "card" }, h("div", { class: "card-h" }, h("h2", {}, "Mid-month upgrade"), h("span", { class: "tag amber" }, "billed separately")),
+          h("table", {},
+            h("tr", {}, h("td", {}, `Credit · ${f.proration_days} unused days`), h("td", { class: "r num neg" }, rs(f.proration_credit_paise))),
+            h("tr", {}, h("td", {}, `Charge · ${f.proration_days} remaining days`), h("td", { class: "r num" }, rs(f.proration_charge_paise))),
+            h("tr", { class: "sum" }, h("td", {}, "Net, settled at upgrade"), h("td", { class: "r num" }, rs(f.proration_credit_paise + f.proration_charge_paise))))) : null,
+        h("div", { class: "card" }, h("div", { class: "card-h" }, h("h2", {}, "Facts the explanation is built from")),
+          h("table", {}, [["raw tokens", int(f.raw_tokens)], ["billable units", int(f.billed_units)], ["fixed charges", rs(f.fixed_charges_paise)], ["usage charges", rs(f.usage_charges_paise)], ["total", rs(f.total_paise)]]
+            .map(([k, v]) => h("tr", {}, h("td", { class: "sub" }, k), h("td", { class: "r num" }, v))))))),
+  ];
+};
+
+P.spike = async () => {
+  const cust = await api("/v1/customers");
+  const st = await Promise.all(cust.customers.map(c => api(`/v1/customers/${c.id}/spike-status`).then(s => ({ ...s, name: c.name }))));
+  st.sort((a, b) => (b.spike_detected - a.spike_detected) || ((b.ratio || 0) - (a.ratio || 0)));
+  const hot = st.filter(s => s.spike_detected);
+  const factor = st[0] ? st[0].threshold_factor : 3;
+  const cards = await Promise.all(st.map(async s => {
+    const ser = s.baseline_hourly_tokens ? await api(`/v1/usage/hourly?customer_id=${s.customer_id}&hours=168`) : null;
+    const max = Math.max(s.current_hour_tokens, s.threshold_tokens, s.baseline_hourly_tokens, 1);
+    const bar = (label, v, cls) => h("div", { class: "bar-row" }, h("span", { class: "sub" }, label),
+      h("div", { class: "track" }, h("div", { class: "fill " + cls, style: `width:${Math.min(100, v / max * 100)}%` })), h("span", { class: "num", style: "text-align:right" }, int(v)));
+    const status = s.spike_detected ? h("span", { class: "tag red" }, `spike · ${s.ratio}×`)
+      : s.reason === "insufficient_baseline" ? h("span", { class: "tag grey" }, "no baseline yet") : h("span", { class: "tag green" }, `normal · ${s.ratio}×`);
+    return h("div", { class: "card", style: s.spike_detected ? "border-left:4px solid var(--red-strong)" : "" },
+      h("div", { class: "card-h" }, h("div", {}, h("h2", {}, s.name), h("code", {}, s.customer_id)), status),
+      s.baseline_hourly_tokens ? [bar("Last hour", s.current_hour_tokens, s.spike_detected ? "hot" : "ok"), bar("Alert line", s.threshold_tokens, "thr"), bar("7-day avg / hr", s.baseline_hourly_tokens, "")] : null,
+      ser ? h("div", { style: "margin-top:8px" }, lineChart([{ points: ser.points, color: s.spike_detected ? "#b3261e" : "#0d47a1" }], { height: 150, threshold: s.threshold_tokens })) : null,
+      h("div", { class: "sub", style: "margin-top:6px" }, s.message));
+  }));
+  return [
+    h("div", { class: "titlerow" }, h("span", { class: "tag" }, "Improvement 2"), h("span", { class: "tag green" }, "covered by tests/test_differentiator_explainer_spike.py")),
+    h("h1", { style: "margin-top:8px" }, "Runaway-usage spike monitor"),
+    h("p", { class: "lede" }, "GET /v1/customers/{id}/spike-status compares the trailing hour with the 7-day hourly average — catching an AI agent stuck in a prompt loop before the invoice does."),
+    hot.length ? h("div", { class: "alert hot", role: "alert" }, h("div", { class: "dot" }),
+        h("div", {}, h("h3", {}, `Spike detected · ${hot[0].ratio}× normal`), hot[0].message))
+      : h("div", { class: "alert calm" }, h("div", {}, h("h3", {}, "All customers within threshold"))),
+    h("div", { class: "grid g-main", style: "margin-top:18px" },
+      h("div", { class: "stack" }, cards),
+      h("div", { class: "stack" },
+        h("div", { class: "card" }, h("div", { class: "card-h" }, h("h2", {}, "How detection works")),
+          h("table", {},
+            h("tr", {}, h("td", { class: "sub" }, "Current window"), h("td", { class: "r" }, "trailing 1 hour")),
+            h("tr", {}, h("td", { class: "sub" }, "Baseline"), h("td", { class: "r" }, "previous 7 days ÷ 168")),
+            h("tr", {}, h("td", { class: "sub" }, "Alert when"), h("td", { class: "r" }, `last hour > ${factor} × baseline`)),
+            h("tr", {}, h("td", { class: "sub" }, "SPIKE_THRESHOLD_FACTOR"), h("td", { class: "r num" }, String(factor))),
+            h("tr", {}, h("td", { class: "sub" }, "No 7-day history"), h("td", { class: "r" }, "no alert (no false alarm)")),
+            h("tr", {}, h("td", { class: "sub" }, "Evaluated at"), h("td", { class: "r" }, st[0] ? dt(st[0].evaluated_at_iso) : "—")))),
+        h("div", { class: "note" }, "Alerts are flagged on the API response and logged as a warning. Pausing keys or rate-limiting is out of scope for this engine.")))
+  ];
+};
+
+/* ---------- router ---------- */
+let TENANT = "";
+async function route() {
+  const [, page = "overview", arg] = (location.hash || "#/overview").split("/");
+  const key = P[page] ? page : "overview";
+  renderNav(key);
+  const view = $("#view");
+  view.replaceChildren(h("div", { class: "empty" }, "Loading…"));
+  try {
+    const kids = await P[key](arg ? decodeURIComponent(arg) : undefined);
+    view.replaceChildren(...[kids].flat(Infinity).filter(Boolean));
+  } catch (e) {
+    view.replaceChildren(h("div", { class: "card err" }, "Could not load: " + e.message));
+  }
+  window.scrollTo(0, 0);
+  api("/v1/overview").then(o => {
+    spikeCount = o.active_spikes.length; TENANT = o.tenant_id; renderNav(key);
+    $("#tenant").textContent = "Tenant: " + o.tenant_id;
+  }).catch(() => {});
+  refreshTop();
+}
+window.addEventListener("hashchange", route);
+route();
+</script>
+</body>
+</html>

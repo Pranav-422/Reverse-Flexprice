@@ -1,4 +1,8 @@
-# Core Billing Engine
+# Paise-Perfect
+
+**Usage billing for Indian AI APIs that never double-bills and explains every rupee.**
+
+_Core Billing Engine for the Usage-Based Billing card._
 
 A usage-based billing engine for Indian AI API startups — **clean-room rebuilt from
 `docs/` alone**, with no access to the original implementation.
@@ -32,13 +36,27 @@ python3 -m venv venv
 cp .env.example .env          # no secrets needed; defaults work as-is
 ```
 
+**On Windows** (PowerShell or cmd) the same steps are:
+
+```bat
+py -3 -m venv venv
+venv\Scripts\pip install -r requirements.txt
+copy .env.example .env
+venv\Scripts\python -m pytest -q
+scripts\demo
+scripts\ui
+```
+
+`scripts\demo` and `scripts\ui` are `.cmd` launchers that use `venv\Scripts\python`.
+Everywhere below, read `./venv/bin/` as `venv\Scripts\` and `./scripts/x` as `scripts\x`.
+
 ### Run the tests
 
 ```bash
 ./venv/bin/python -m pytest -q
 ```
 
-Expected: **35 passed** in roughly one second.
+Expected: **40 passed** in about two seconds.
 
 ### Run the demo
 
@@ -50,6 +68,31 @@ Boots a real `uvicorn` server on a throwaway SQLite file and drives it over HTTP
 printing every request alongside the **expected** value quoted from `docs/PRD.md` and
 the **actual** response, with a PASS/FAIL verdict per check. Expected: **67 checks,
 all PASS**. It walks the three Killer Tests and then both improvements.
+
+### Open the dashboard
+
+```bash
+./scripts/ui          # Windows: scripts\ui
+```
+
+Seeds a demo tenant into a throwaway database, freezes the clock at
+2026-05-01 00:30 UTC and opens `http://127.0.0.1:8000/app` — six screens, every
+number fetched live from the API:
+
+| Screen | What you can do on it |
+|---|---|
+| Overview | Billed total, stored event rows (1 per `event_id`), spike alerts, 7-day token chart |
+| Usage Events | **Killer Test 1** live: “Send twice concurrently” fires two posts of one `event_id` 2 s apart → one `201`, one `200 duplicate_skipped`, 1 row stored |
+| Customers | **Killer Test 2** live: preview and execute a Day-15 upgrade of `c_live` (0.5000 → −₹30 + ₹60 = ₹30), then generate the period's invoice |
+| Pricing | **Killer Test 3** live: slider over tokens, slab vs volume from the engine's own rating code (1.5M tokens → ₹140 vs ₹85) |
+| Invoices | Plain-language explanation + line items with tier and proration math (Improvement 2) |
+| Spike Monitor | Red **"Spike detected · 10× normal"** banner for `c_runaway` next to a calm `c_steady` (Improvement 2) |
+
+The page is plain HTML + JavaScript (no build step, no framework) over the `/v1`
+API. The read-only views it needs (`GET /v1/customers`, `/v1/plans`, `/v1/invoices`,
+`/v1/usage/recent`, `/v1/usage/hourly`, `/v1/overview`, and the two previews) live in
+`app/api/routes/dashboard.py` and never write. The original single-page explainer is
+still at `/ui`.
 
 ### Run the API server
 
@@ -151,10 +194,13 @@ app/
   db/           database (SQLite/WAL), models (DDL)
   services/     ingestion, meter, pricing, proration, invoice,
                 subscription, explainer, spike_detector
-  main.py       FastAPI app + /health
-tests/          3 Killer Tests + 1 Fix + 1 Differentiator suite  (35 cases)
+  static/       app.html (the /app dashboard), explainer.html (/ui)
+  main.py       FastAPI app + /health + /app + /ui
+tests/          3 Killer Tests + 1 Fix + 1 Differentiator + dashboard views  (40 cases)
 scripts/
   demo          live step-by-step walkthrough (expected vs actual)
+  ui            seeds a demo tenant and opens the /app dashboard
+  *.cmd         Windows launchers for demo and ui
   make_deck.py  generates deck.pdf
 docs/           the ONLY source of truth for this rebuild
 ```
@@ -178,6 +224,12 @@ docs/           the ONLY source of truth for this rebuild
 | `GET` | `/v1/invoices/{id}/explanation` | Plain-language breakdown (differentiator) |
 | `GET` | `/v1/customers/{id}/spike-status` | Usage velocity + spike flag (differentiator) |
 | `GET` | `/health` | Status, injected clock, and explainer mode |
+| `GET` | `/app` | Browser dashboard (six screens, live data) |
+| `GET` | `/ui?invoice=&customers=` | Single-page view of the explainer + spike alert |
+| `GET` | `/v1/customers`, `/v1/plans`, `/v1/invoices`, `/v1/overview` | Read-only lists for the dashboard |
+| `GET` | `/v1/usage/recent`, `/v1/usage/hourly?customer_id=` | Recent events; hourly token series |
+| `GET` | `/v1/prices/{id}/preview?raw_units=` | Slab **and** volume rating of a usage price (no write) |
+| `GET` | `/v1/subscriptions/{id}/upgrade-preview?target_plan_id=&effective_date=` | Proration credit/charge/net (no write) |
 
 Timestamps accept **either** epoch seconds or ISO-8601, so every example in
 `docs/API.md` and `docs/PRD.md` runs verbatim. The tenant comes from an optional
