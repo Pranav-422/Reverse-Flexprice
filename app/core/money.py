@@ -43,3 +43,22 @@ def prorate_paise(amount_paise: int, numerator: int, denominator: int) -> int:
         raise ValueError("denominator must be positive")
     micro = paise_to_micro(amount_paise) * int(numerator) // int(denominator)
     return micro_to_paise(micro)
+
+
+def half_up_div(numerator: int, denominator: int) -> int:
+    """Integer half-up division, symmetric around zero.
+
+    The single rounding primitive used by the whole engine. Generalises the
+    DATA_MODEL.md section 1 rule floor((MicroPaise + 5,000) / 10,000) to any
+    denominator, so a rate expressed over an arbitrary packaging divisor can
+    still be rounded exactly once, at the end.
+    """
+    denominator = int(denominator)
+    if denominator == 0:
+        raise ValueError("denominator must be non-zero")
+    if denominator < 0:
+        numerator, denominator = -numerator, -denominator
+    numerator = int(numerator)
+    if numerator < 0:
+        return -((-numerator * 2 + denominator) // (2 * denominator))
+    return (numerator * 2 + denominator) // (2 * denominator)

@@ -13,7 +13,7 @@ import uuid
 from app.core import time as btime
 from app.db import database
 from app.services import meter as meter_svc
-from app.services.pricing import Tier, calculate_cost, unit_amount_paise
+from app.services.pricing import Tier, calculate_cost_exact, unit_amount_paise
 
 
 class InvoiceError(Exception):
@@ -142,8 +142,10 @@ def build_cycle_lines(tenant_id: str, subscription, period_start: int,
         if use["quantity"] == 0:
             continue
 
-        result = calculate_cost(use["quantity"], load_tiers(price["id"]),
-                                price["tier_mode"])
+        # Rate from RAW units so the packaging divisor never pre-rounds the
+        # money (GAPS.md Improvement 1 / PRD.md section 6 case 4).
+        result = calculate_cost_exact(use["raw_units"], use["divide_by"],
+                                      load_tiers(price["id"]), price["tier_mode"])
         mode_label = "Tiered Slab" if price["tier_mode"] == "slab" else "Tiered Volume"
         meta = dict(result.metadata)
         meta.update({
