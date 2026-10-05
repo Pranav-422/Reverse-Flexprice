@@ -1,0 +1,6 @@
+# Ignore upstream cloned repo
+flexprice/
+
+# Environment / local
+.env
+.DS_Store
