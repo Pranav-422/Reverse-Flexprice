@@ -40,6 +40,8 @@ def get_float(name: str) -> float:
 
 def database_path() -> str:
     """Translate the sqlite:/// URL into a plain filesystem path."""
+    if not os.environ.get("DATABASE_URL") and os.environ.get("VERCEL"):
+        return "/tmp/billing.db"   # serverless: only /tmp is writable
     url = get("DATABASE_URL")
     for prefix in ("sqlite:///", "sqlite://", "sqlite:"):
         if url.startswith(prefix):

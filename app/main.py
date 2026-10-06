@@ -2,6 +2,7 @@
 
 A clean-room rebuild driven entirely by docs/. See README.md.
 """
+import os
 from contextlib import asynccontextmanager
 from pathlib import Path
 
@@ -16,6 +17,11 @@ from app.db.database import init_db
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     init_db()
+    if os.environ.get("VERCEL") or config.get("DEMO_SEED") == "1":
+        # Hosted demo: every serverless instance starts from the same seeded
+        # tenant with the clock frozen (see app/demo_seed.py).
+        from app.demo_seed import ensure_seeded
+        ensure_seeded(app)
     yield
 
 

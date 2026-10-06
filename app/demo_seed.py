@@ -98,6 +98,7 @@ def ensure_seeded(app) -> None:
         warnings.filterwarnings("ignore")  # starlette testclient deprecation noise
         from fastapi.testclient import TestClient
 
-        with TestClient(app) as c:
-            seed(c)
+        # No `with`: entering the context would re-run the app lifespan, which
+        # is where this function is called from on Vercel.
+        seed(TestClient(app))
     os.environ["BILLING_NOW"] = NOW
