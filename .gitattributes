@@ -2,3 +2,4 @@
 *.cmd text eol=crlf
 scripts/demo text eol=lf
 scripts/ui text eol=lf
+*.pdf binary
