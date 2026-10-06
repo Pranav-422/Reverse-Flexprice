@@ -44,6 +44,7 @@ def health():
         "billing_now_injected": bool(config.get("BILLING_NOW")),
         "billing_period_minutes": config.get_int("BILLING_PERIOD_MINUTES"),
         "ai_explainer": "live" if config.ai_api_key() else "template_fallback",
+        "hosted_preview": bool(os.environ.get("VERCEL")),
     }
 
 

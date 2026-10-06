@@ -160,6 +160,10 @@
   .foot { margin-top: 22px; display: flex; gap: 12px; align-items: center; }
   svg.chart text { font: 10.5px var(--body); fill: var(--muted); }
   .mnav { display: none; }
+  .hosted { margin-left: 240px; padding: 9px 28px; background: var(--amber-soft); color: #5c3400;
+            font-size: 12.5px; border-bottom: 1px solid #f3cf9f; }
+  .hosted b { color: #3d2200; }
+  .hosted code { background: rgba(255,255,255,.6); padding: 1px 5px; border-radius: 4px; }
   tr.click:focus-visible td { background: var(--primary-tint); outline: none; }
   tr.click:focus-visible td:first-child { box-shadow: inset 3px 0 0 var(--primary-c); }
   a:focus-visible, button:focus-visible { outline: 2px solid var(--primary-c); outline-offset: 2px; }
@@ -177,6 +181,7 @@
   @media (max-width: 760px) {
     .top { height: auto; flex-wrap: wrap; padding: 10px 16px; }
     .top .grow { display: none; }
+    .hosted { margin-left: 0; padding: 9px 16px; }
     .mnav { display: flex; gap: 6px; overflow-x: auto; padding: 10px 16px; background: var(--card);
             border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 4; }
     .mnav a { white-space: nowrap; padding: 6px 12px; border-radius: 99px; background: var(--primary-tint); color: var(--ink-2); font-weight: 600; font-size: 12.5px; }
@@ -204,6 +209,7 @@
   <span class="chip" id="ai"></span>
   <span class="chip blue" id="clock" title="BILLING_NOW — the engine's injected clock. scripts/ui freezes it so every number is reproducible.">clock</span>
 </header>
+<div class="hosted" id="hosted" role="note" hidden></div>
 <main id="view"></main>
 
 <script>
@@ -265,6 +271,12 @@ async function refreshTop() {
     const hl = await api("/health");
     $("#clock").textContent = (hl.billing_now_injected ? "Demo clock (frozen) " : "Server clock ") + dt(hl.now_iso);
     $("#ai").textContent = hl.ai_explainer === "live" ? "AI explainer: live" : "AI explainer: template (no key)";
+    if (hl.hosted_preview && $("#hosted").hidden) {
+      $("#hosted").replaceChildren(h("b", {}, "Hosted preview. "),
+        "Each server instance keeps its own copy of the demo data, so something you change (an event, an upgrade) may not appear on the next request. For the guaranteed live run, clone the repo and run ",
+        h("code", {}, "scripts/ui"), " — see the README.");
+      $("#hosted").hidden = false;
+    }
   } catch {}
 }
 
