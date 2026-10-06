@@ -24,7 +24,7 @@ ever touches a monetary figure.
   ClickHouse, Redis, Kafka or Temporal.
 * **Injectable clock.** Nothing calls `datetime.now()`; `BILLING_NOW` in `.env` drives
   server time, so a 30-day cycle and a Day-15 upgrade are simulated in milliseconds.
-  The whole test suite runs in about a second.
+  The whole test suite runs in about two seconds.
 * **Optional AI.** The invoice explainer uses Claude when `AI_PROVIDER_API_KEY` is set
   and falls back to a deterministic template when it is not. The app never crashes
   without a key.
@@ -196,12 +196,14 @@ path** — every test in the suite runs without an AI key.
 
 ```
 app/
-  api/routes/   events, catalog, subscriptions, invoices, insights
+  api/routes/   events, catalog, subscriptions, invoices, insights,
+                dashboard (read-only views for /app)
   core/         config (env), time (BILLING_NOW), money (integer paise math)
   db/           database (SQLite/WAL), models (DDL)
   services/     ingestion, meter, pricing, proration, invoice,
                 subscription, explainer, spike_detector
   static/       app.html (the /app dashboard), explainer.html (/ui)
+  demo_seed.py  demo tenant for scripts/ui and the hosted preview
   main.py       FastAPI app + /health + /app + /ui
 tests/          3 Killer Tests + 1 Fix + 1 Differentiator + dashboard views  (41 cases)
 scripts/
@@ -257,9 +259,27 @@ required to run anything in this repository.**
 | `SPIKE_THRESHOLD_FACTOR` | Spike multiple over the 7-day hourly average (`3.0`) |
 | `MAX_PAST_DRIFT_DAYS` / `MAX_FUTURE_DRIFT_MINUTES` | Event timestamp drift bounds |
 | `TENANT_ID` | Default tenant when no `X-Tenant-ID` header is sent |
+| `DEMO_SEED` | `1` = seed the demo tenant and freeze the clock at startup (always on when running on Vercel) |
 
 `.env`, `venv/`, `node_modules/` and `*.db` are gitignored. `.env.example` contains
 names and comments only.
+
+## Known limitations
+
+Found in our own review and stated here rather than left for a reviewer to find:
+
+* **Late events into a sealed period are accepted but not re-billed.** Ingestion
+  rejects timestamps older than `MAX_PAST_DRIFT_DAYS` (30), not older than the start
+  of the open billing period, so an event dated inside an already-finalized period
+  returns `201` and is counted by the meter, but the sealed invoice is immutable and
+  idempotent and does not change. `docs/PRD.md` section 4 (Should Have, "Strict Timestamp Drift
+  Validation") asks for rejection beyond the active billing window; closing this means checking the event's period against
+  finalized invoices at ingest.
+* **Fractional token counts are truncated.** `properties.total_tokens = 1.7` is
+  stored as `1`; non-integer values should be rejected with `400` instead.
+* **The engine allows several plan changes in one period.** Each is prorated from
+  the then-current plan; the dashboard shows one change per period.
+* **The hosted preview is per-instance.** See the note under the live-demo link.
 
 ## Notes on reading `docs/`
 
