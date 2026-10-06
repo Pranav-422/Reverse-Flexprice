@@ -8,6 +8,7 @@ from pathlib import Path
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import landscape
 from reportlab.lib.units import inch
+from reportlab.lib.utils import ImageReader
 from reportlab.pdfgen import canvas
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -113,7 +114,7 @@ SLIDES = [
               "     =                                14,000 paise = Rs 140.00",
               "VOLUME: 1,500 x Rs 0.05 + Rs 10.00 =   8,500 paise = Rs  85.00"]),
         ],
-        "status": "pytest: 41 passed  -  16 Killer Test cases, 7 Fix, "
+        "status": "pytest: 44 passed  -  16 Killer Test cases, 10 Fix, "
                   "14 Differentiator, 4 Dashboard",
         "footer": "Edge cases pinned too: exact tier boundary stays in Tier 1; "
                   "Day-1 and Day-30 upgrades; aggregate-then-tier.",
@@ -179,7 +180,7 @@ SLIDES = [
         "code": [
             "python3 -m venv venv && ./venv/bin/pip install -r requirements.txt",
             "cp .env.example .env",
-            "./venv/bin/python -m pytest -q      # 41 passed in ~2s",
+            "./venv/bin/python -m pytest -q      # 44 passed in ~2s",
             "./scripts/demo                      # 67 live checks, all PASS",
             "./scripts/ui                        # dashboard: 127.0.0.1:8000/app",
             r"Windows: venv\Scripts\python -m pytest -q  |  scripts\demo  |  scripts\ui",
@@ -189,7 +190,7 @@ SLIDES = [
                 "EXPECTED value quoted from docs/PRD.md beside the ACTUAL "
                 "response.",
         "results": [
-            ("41", "pytest cases passing", "16 Killer/7 Fix/14 Diff/4 UI"),
+            ("44", "pytest cases passing", "16 Killer/10 Fix/14 Diff/4 UI"),
             ("67", "live demo checks", "every one PASS"),
             ("~2s", "full suite runtime", "BILLING_NOW, no sleeps"),
             ("0", "external services", "SQLite only"),
@@ -479,20 +480,46 @@ def slide_5(c, s, i):
         c.drawString(x + 10, y - 0.64 * inch, sub)
     y -= 0.95 * inch
 
+    # Lower band: verified list on the left, live dashboard screenshot on the right.
+    shot = ROOT / "assets" / "deck_dashboard.png"
+    band_bottom = 0.72 * inch                 # clear of the footer
+    img_w = img_h = 0.0
+    if shot.exists():
+        iw, ih = ImageReader(str(shot)).getSize()
+        img_w = 4.15 * inch
+        img_h = img_w * ih / iw
+        if img_h > y - band_bottom:           # never let it reach the footer
+            img_h = y - band_bottom
+            img_w = img_h * iw / ih
+        img_x = W - MARGIN - img_w
+        img_y = y - img_h
+        c.drawImage(str(shot), img_x, img_y, width=img_w, height=img_h,
+                    preserveAspectRatio=True, anchor="nw", mask="auto")
+        c.setStrokeColor(RULE)
+        c.setLineWidth(0.8)
+        c.rect(img_x, img_y, img_w, img_h, stroke=1, fill=0)
+        c.setFillColor(MUTED)
+        c.setFont("Helvetica", 7.2)
+        c.drawRightString(W - MARGIN, img_y - 10,
+                          "scripts/ui  ->  127.0.0.1:8000/app#/spike  (live data)")
+
+    text_w = W - 2 * MARGIN - img_w - 0.3 * inch if img_w else W - 2 * MARGIN
     c.setFillColor(INK)
     c.setFont("Helvetica-Bold", 10)
     c.drawString(MARGIN, y, "Verified live in the demo")
     y -= 15
-    half = W / 2 - MARGIN + 0.1 * inch
-    for n, item in enumerate(s["verified"]):
-        x = MARGIN if n % 2 == 0 else W / 2
-        yy = y - (n // 2) * 13.5
+    for item in s["verified"]:
         c.setFillColor(GOOD)
         c.setFont("Helvetica-Bold", 9)
-        c.drawString(x, yy, "+")
+        c.drawString(MARGIN, y, "+")
         c.setFillColor(MUTED)
-        c.setFont("Helvetica", 9)
-        c.drawString(x + 11, yy, item)
+        lines = wrap(c, item, "Helvetica", 8.6, text_w - 12)
+        for k, ln in enumerate(lines):
+            c.setFont("Helvetica", 8.6)
+            c.drawString(MARGIN + 11, y, ln)
+            if k < len(lines) - 1:
+                y -= 10.5
+        y -= 12.5
 
 
 def main():

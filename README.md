@@ -63,7 +63,7 @@ Everywhere below, read `./venv/bin/` as `venv\Scripts\` and `./scripts/x` as `sc
 ./venv/bin/python -m pytest -q
 ```
 
-Expected: **41 passed** in about two seconds.
+Expected: **44 passed** in about two seconds.
 
 ### Run the demo
 
@@ -205,7 +205,7 @@ app/
   static/       app.html (the /app dashboard), explainer.html (/ui)
   demo_seed.py  demo tenant for scripts/ui and the hosted preview
   main.py       FastAPI app + /health + /app + /ui
-tests/          3 Killer Tests + 1 Fix + 1 Differentiator + dashboard views  (41 cases)
+tests/          3 Killer Tests + 1 Fix + 1 Differentiator + dashboard views  (44 cases)
 scripts/
   demo          live step-by-step walkthrough (expected vs actual)
   ui            seeds a demo tenant and opens the /app dashboard

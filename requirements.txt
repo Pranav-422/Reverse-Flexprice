@@ -10,6 +10,8 @@ pytest>=8.3
 
 # deck.pdf generation (scripts/make_deck.py)
 reportlab>=4.2
+# embeds assets/deck_dashboard.png into the deck
+pillow>=10.0
 
 # OPTIONAL: AI invoice explainer (GAPS.md Improvement 2).
 # The app runs fully without this package and without AI_PROVIDER_API_KEY --
