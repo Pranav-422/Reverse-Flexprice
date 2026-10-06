@@ -493,7 +493,9 @@ P.customers = async (id) => {
       const s = r.settlement_invoice;
       result.replaceChildren(h("div", { class: "res ok", style: "margin-top:12px" }, h("b", {}, "Upgraded. "), "Settlement invoice ",
         h("a", { href: "#/invoices/" + s.id }, h("code", {}, s.id)), ` for ${rs(s.amount_due_paise)} (coefficient ${r.proration.coefficient}).`));
-      setTimeout(() => route(), 900);
+      // Rendered in place rather than re-fetched, so the confirmation does not
+      // depend on the next request reaching the same server instance.
+      target.disabled = eff.disabled = true;
     } catch (e) { result.replaceChildren(h("div", { class: "res err", style: "margin-top:12px" }, e.message)); upBtn.disabled = false; }
   };
   const genOut = h("div");

@@ -8,6 +8,8 @@
 
 **Card:** Usage-Based Billing Engine
 
+**Live demo:** https://paise-perfect.vercel.app (Vercel, deployed from `main`; seeded demo tenant, clock frozen at 2026-05-01 00:30 UTC)
+
 **Original:** https://github.com/flexprice/flexprice
 *(The rebuild agent never saw the original; it built only from `docs/`. The upstream
 repository was read earlier, by a separate reverse-engineering pass, solely to author

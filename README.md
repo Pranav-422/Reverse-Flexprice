@@ -4,6 +4,13 @@
 
 _Core Billing Engine for the Usage-Based Billing card._
 
+**Live demo:** https://paise-perfect.vercel.app (deployed from this repository's
+`main` branch on Vercel). Every serverless instance seeds the same demo tenant into
+its own SQLite file in `/tmp` with the clock frozen at 2026-05-01 00:30 UTC, so the
+page always opens in a known state. Changes you make there live only as long as that
+instance, and a later request may land on a fresh one — for a guaranteed-consistent
+live run, use `scripts/ui` locally.
+
 A usage-based billing engine for Indian AI API startups — **clean-room rebuilt from
 `docs/` alone**, with no access to the original implementation.
 
@@ -88,7 +95,7 @@ number fetched live from the API:
 | Invoices | Plain-language explanation + line items with tier and proration math (Improvement 2) |
 | Spike Monitor | Red **"Spike detected · 10× normal"** banner for `c_runaway` next to a calm `c_steady`; “Simulate a runaway loop” posts a burst for `c_steady` and the alert fires live (Improvement 2) |
 
-The page is plain HTML + JavaScript (no build step, no framework) over the `/v1`
+The same dashboard is hosted at https://paise-perfect.vercel.app. The page is plain HTML + JavaScript (no build step, no framework) over the `/v1`
 API and works on a phone as well as a laptop. The read-only views it needs (`GET /v1/customers`, `/v1/plans`, `/v1/invoices`,
 `/v1/usage/recent`, `/v1/usage/hourly`, `/v1/overview`, and the two previews) live in
 `app/api/routes/dashboard.py` and never write. The original single-page explainer is
