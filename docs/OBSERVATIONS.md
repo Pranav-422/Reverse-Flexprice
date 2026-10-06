@@ -56,7 +56,7 @@ This document catalogs every verified architectural claim, code path, and core b
 - **ClickHouse Query Finalization**: Usage queries append `FINAL` modifier (`SETTINGS do_not_merge_across_partitions_select_final = 1`) to collapse duplicate rows.
   * Evidence: `internal/repository/clickhouse/meter_usage_query_builder.go:253-259` [Confirmed]
 - **Unique Count Hash**: `COUNT_UNIQUE` aggregations derive SHA-256 `unique_hash` from designated attributes, checking `unique_hash != ''`.
-  * Evidence: `internal/repository/clickhouse/meter_usage.go:103-120` [Confirmed], `internal/repository/clickhouse/meter_usage_query_builder.go:191-193` [Confirmed]
+  * Evidence: `internal/ee/service/meter_usage_tracking.go:626-631` [Confirmed] (hash), `internal/repository/clickhouse/meter_usage.go:103-120` [Confirmed] (duplicate check), `internal/repository/clickhouse/meter_usage_query_builder.go:191-193` [Confirmed]
 
 ### B. Meter Aggregations & Window Slicing
 - **Aggregation Types**: Supports `COUNT`, `SUM`, `AVG`, `COUNT_UNIQUE`, `LATEST`, `SUM_WITH_MULTIPLIER`, `MAX`, `WEIGHTED_SUM`, and CEL expressions.
@@ -72,7 +72,7 @@ This document catalogs every verified architectural claim, code path, and core b
 - **Tier Modes**:
   * Volume (`BILLING_TIER_VOLUME`): Total consumption maps to a single bracket; entire quantity is billed at that tier's unit amount + flat fee.
   * Slab (`BILLING_TIER_SLAB`): Usage is partitioned across progressive brackets. Each bracket bills the slice falling inside its bounds.
-  * Evidence: `internal/ee/service/price.go:1163-1232` [Confirmed], `internal/domain/price/model.go:23-24` [Confirmed]
+  * Evidence: `internal/ee/service/price.go:1163-1232` [Confirmed], `internal/types/price.go:192,196` [Confirmed]
 - **Boundary Inclusivity**: `UpTo` is strictly inclusive (`quantity <= UpTo`). E.g., consumption of exactly 1,000 units with `UpTo = 1000` remains in that tier.
   * Evidence: `internal/domain/price/model.go:348-352` [Confirmed], `internal/ee/service/price.go:1179` [Confirmed]
 - **Tier Amount Formula**:
@@ -80,7 +80,8 @@ This document catalogs every verified architectural claim, code path, and core b
   * Evidence: `internal/domain/price/model.go:282-288` [Confirmed], `internal/ee/service/price.go:1191-1192,1222-1224` [Confirmed]
 - **Unit Conversion (Packaging)**: Evaluated before tier matching using `TransformQuantity`:
   $$\text{BilledUnits} = \text{round}\left(\frac{\text{RawUnits}}{\text{DivideBy}}\right)$$
-  Where round is `up` (ceiling), `down` (floor), or `none`.
+  Where round is `up` (ceiling) or `down` (floor); an empty value means no rounding (`RoundType.Validate` allows only `up`, `down` or empty).
+  * Evidence: `internal/types/price.go:136-150` [Confirmed]
   * Evidence: `internal/domain/price/model.go:320-344` [Confirmed]
 - **Precision & Rounding**: Intermediate math keeps arbitrary-precision decimals. Final rounding uses half-up rounding to the currency's precision (`amount.Round(currencyPrecision)`). USD/EUR/INR use 2 decimal places.
   * Evidence: `internal/domain/price/model.go:308-310` [Confirmed], `internal/types/currency.go:11-50,72-76,124-141` [Confirmed]
@@ -102,6 +103,8 @@ This document catalogs every verified architectural claim, code path, and core b
   $$\text{ChargeAmount} = (\text{NewPrice} \times \text{NewQuantity}) \times \text{coefficient}$$
   $$\text{NetAmount} = \text{ChargeAmount} - \text{CreditAmount}$$
   * Evidence: `internal/domain/proration/calculator.go:95-115,129-144` [Confirmed]
+  * **Credit cap** (plan changes, not quantity changes): the credit is capped at the amount originally paid for the old item, minus credits already issued for it, and is dropped if that leaves nothing.
+    * Evidence: `internal/domain/proration/calculator.go:100-104,181-200` [Confirmed]
 - **Opposing Line Items**: Settlement generates two line items on the settlement invoice: a negative credit line for old plan unused time and a positive debit line for new plan remaining time.
   * Evidence: `internal/ee/service/line_item_proration.go:404-435,549-589` [Confirmed]
 
@@ -132,7 +135,7 @@ This document catalogs every verified architectural claim, code path, and core b
 
 ### Trace B: Mid-Period Upgrade & Proration Settlement
 1. Client calls `POST /v1/subscriptions/:id/change/v2/execute` -> `internal/api/v1/subscription_plan_change.go:65-78` [Confirmed]
-2. `subscriptionService.ExecutePlanChange` forwards to `executePlanChangeAt` -> begins DB transaction and acquires `FOR UPDATE` lock -> `internal/ee/service/subscription_change_v2.go:855-868` [Confirmed]
+2. `subscriptionService.ExecutePlanChange` forwards to `executePlanChangeAt` -> begins DB transaction and acquires `FOR UPDATE` lock -> `internal/ee/service/subscription_change_v2.go:855-868,864-865,956-959` [Confirmed]
 3. `resolvePlanChange` validates compatibility and currency parity -> `internal/ee/service/subscription_change_v2.go:64-100` [Confirmed]
 4. `lineItemProrationService.Compute` reads billed amounts from PostgreSQL -> computes proration coefficient, unused credit, and new charge -> `internal/ee/service/line_item_proration.go:200-260` [Confirmed]
 5. Updates line items (`end_date = effectiveAt` on old, `start_date = effectiveAt` on new) and swaps `plan_id` -> `internal/ee/service/subscription_change_v2.go:880-898` [Confirmed]
