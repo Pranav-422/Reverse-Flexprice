@@ -135,7 +135,31 @@
   .alert.hot .dot { width: 11px; height: 11px; border-radius: 50%; background: #fff; margin-top: 6px; flex: none;
                     animation: pulse 1.2s infinite; }
   @keyframes pulse { 50% { opacity: .25; } }
-  @media (prefers-reduced-motion: reduce) { .alert.hot .dot { animation: none; } }
+  /* ---- smoothness: short, ease-out, never blocks input ---- */
+  :root { --ease: cubic-bezier(.2,.7,.3,1); --d-fast: 150ms; --d-med: 250ms; --d-slow: 400ms; }
+  #view.enter > * { animation: fadeUp var(--d-med) var(--ease) both; }
+  #view.enter > *:nth-child(2) { animation-delay: 40ms; } #view.enter > *:nth-child(3) { animation-delay: 80ms; }
+  #view.enter > *:nth-child(4) { animation-delay: 120ms; } #view.enter > *:nth-child(n+5) { animation-delay: 160ms; }
+  .card, .btn, nav a, .guide a, tr.click td, .seg button, input, select {
+    transition: background-color var(--d-fast) var(--ease), border-color var(--d-fast) var(--ease),
+                box-shadow var(--d-fast) var(--ease), color var(--d-fast) var(--ease), transform var(--d-fast) var(--ease); }
+  .btn:active { transform: translateY(1px); }
+  .guide a:hover { transform: translateY(-2px); }
+  .grow { transition: width var(--d-slow) var(--ease); }
+  .timeline > .grow { width: 0; }
+  .fill.grow { width: 0; }
+  tr.in { animation: fadeUp var(--d-med) var(--ease) both; }
+  svg.chart .draw { stroke-dasharray: 1; stroke-dashoffset: 1; animation: draw 600ms var(--ease) 120ms forwards; }
+  .alert.hot { animation: fadeDown var(--d-slow) var(--ease) both; }
+  .res { animation: fadeUp var(--d-med) var(--ease) both; }
+  .skel { background: var(--primary-tint); border-radius: 10px; }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+  @keyframes fadeDown { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+  @keyframes draw { to { stroke-dashoffset: 0; } }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+    svg.chart .draw { stroke-dashoffset: 0; }
+  }
   .alert h3 { margin: 0 0 2px; font: 700 17px var(--head); }
   .alert.calm { background: var(--green-soft); color: var(--green); }
 
@@ -241,6 +265,23 @@ async function api(path, opts = {}) {
 }
 const post = (path, body, raw) => api(path, { method: "POST", body: JSON.stringify(body), raw });
 
+/* ---- smoothness helpers ---- */
+const REDUCED = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const later = (fn) => requestAnimationFrame(() => requestAnimationFrame(fn));
+/* Count a number up from 0; width is pinned to the final text so nothing shifts. */
+function countUp(n, fmt) {
+  const final = fmt(n), el = h("span", { style: `display:inline-block;min-width:${final.length}ch` }, REDUCED ? final : fmt(0));
+  if (!REDUCED) {
+    const t0 = performance.now(), ms = 500;
+    const step = (t) => { const k = Math.min(1, (t - t0) / ms), e = 1 - Math.pow(1 - k, 3);
+      el.textContent = k < 1 ? fmt(Math.round(n * e)) : final; if (k < 1) requestAnimationFrame(step); };
+    requestAnimationFrame(step);
+  }
+  return el;
+}
+/* Elements rendered with data-w start at width 0 and ease to their value. */
+function grow(root) { later(() => root.querySelectorAll("[data-w]").forEach(e => { e.style.width = e.dataset.w; })); }
+
 const ICONS = {
   overview: "M3 3h8v8H3zM13 3h8v5h-8zM13 10h8v11h-8zM3 13h8v8H3z",
   events: "M13 2 4 14h7l-1 8 9-12h-7z",
@@ -305,7 +346,7 @@ function lineChart(series, { height = 220, threshold = null } = {}) {
     el("text", { x: W - R, y: y(threshold) - 5, "text-anchor": "end", style: "fill:#a15c00;font-weight:600" }).textContent = `alert line ${int(threshold)}/hr`;
   }
   for (const s of series) {
-    el("polyline", { points: s.points.map((p, i) => `${x(i)},${y(p.tokens)}`).join(" "), fill: "none", stroke: s.color, "stroke-width": 2, "stroke-linejoin": "round" });
+    el("path", { d: s.points.map((p, i) => `${i ? "L" : "M"}${x(i).toFixed(1)},${y(p.tokens).toFixed(1)}`).join(""), fill: "none", stroke: s.color, "stroke-width": 2, "stroke-linejoin": "round", pathLength: 1, class: "draw" });
     const last = s.points[n - 1];
     el("circle", { cx: x(n - 1), cy: y(last.tokens), r: 4, fill: s.color });
   }
@@ -337,9 +378,9 @@ P.overview = async () => {
         h("a", { href: inv.invoices[0] ? "#/invoices/" + (inv.invoices.find(i => i.invoice_type !== "one_off") || inv.invoices[0]).id : "#/invoices" }, h("em", {}, "Improvement 2"), h("b", {}, "Read the bill in plain words"), h("span", {}, "Every rupee explained, with or without an AI key.")),
         h("a", { href: "#/spike" }, h("em", {}, "Improvement 2"), h("b", {}, "Catch a runaway agent"), h("span", {}, "Spike Monitor → simulate a loop on Steady Labs.")))),
     h("div", { class: "grid g4" },
-      kpi("Billed (finalized invoices)", rs(o.billed_paise), `${o.finalized_invoices} invoice${o.finalized_invoices === 1 ? "" : "s"}`),
-      kpi("Event rows stored", int(o.event_rows), o.event_rows === o.distinct_event_ids ? h("span", { class: "tag green" }, "1 row per event_id") : `${int(o.distinct_event_ids)} distinct ids`),
-      kpi("Customers", int(o.customers), "in this tenant"),
+      kpi("Billed (finalized invoices)", countUp(o.billed_paise, rs), `${o.finalized_invoices} invoice${o.finalized_invoices === 1 ? "" : "s"}`),
+      kpi("Event rows stored", countUp(o.event_rows, int), o.event_rows === o.distinct_event_ids ? h("span", { class: "tag green" }, "1 row per event_id") : `${int(o.distinct_event_ids)} distinct ids`),
+      kpi("Customers", countUp(o.customers, int), "in this tenant"),
       kpi("Active spike alerts", String(o.active_spikes.length), hot ? h("a", { href: "#/spike" }, `${hot.customer_id} at ${hot.ratio}× →`) : "all within threshold", o.active_spikes.length ? "red" : "")),
     h("div", { class: "grid g-main", style: "margin-top:18px" },
       h("div", { class: "card" },
@@ -360,7 +401,7 @@ function kpi(label, value, foot, cls) {
 }
 function rowLink(href, ...cells) {
   const go = () => location.hash = href;
-  return h("tr", { class: "click", tabindex: "0", role: "link", onclick: go,
+  return h("tr", { class: "click in", tabindex: "0", role: "link", onclick: go,
                    onkeydown: (e) => { if (e.key === "Enter") go(); } }, ...cells);
 }
 function invoiceTable(rows, compact) {
@@ -488,8 +529,8 @@ P.customers = async (id) => {
     const tp = plans.plans.find(x => x.id === p.target_plan_id);
     prev.replaceChildren(
       h("div", { class: "timeline" },
-        h("div", { class: "old", style: `width:${pct}%` }, h("b", {}, curPlan.name), `${p.total_days - p.remaining_days} days served`),
-        h("div", { class: "new", style: `width:${100 - pct}%` }, h("b", {}, tp.name), `${p.remaining_days} days remaining`)),
+        h("div", { class: "old grow", "data-w": `${pct}%` }, h("b", {}, curPlan.name), `${p.total_days - p.remaining_days} days served`),
+        h("div", { class: "new grow", "data-w": `${100 - pct}%` }, h("b", {}, tp.name), `${p.remaining_days} days remaining`)),
       h("div", { class: "tl-axis" }, h("span", {}, day(p.period_start_iso)), h("span", {}, "upgrade " + day(p.effective_date_iso)), h("span", {}, day(p.period_end_iso))),
       h("table", { style: "margin-top:14px" },
         h("tr", {}, h("th", {}, "Component"), h("th", { class: "r" }, "Coefficient"), h("th", { class: "r" }, "Amount")),
@@ -497,6 +538,7 @@ P.customers = async (id) => {
         h("tr", {}, h("td", {}, h("b", {}, "Charge for remaining " + tp.name), h("div", { class: "sub" }, `${rs(p.new_plan_paise)} × ${p.remaining_days}/${p.total_days}`)), h("td", { class: "r num" }, p.coefficient), h("td", { class: "r num" }, rs(p.charge_paise))),
         h("tr", { class: "sum" }, h("td", {}, "Net due at upgrade"), h("td", {}), h("td", { class: "r num" }, rs(p.net_paise)))),
       h("div", { class: "note", style: "margin-top:12px" }, `Coefficient = ${p.remaining_days} remaining days ÷ ${p.total_days} = ${p.coefficient}. Settled on its own invoice at upgrade time; the cycle invoice is not touched.`));
+    grow(prev);
   }
   upBtn.onclick = async () => {
     upBtn.disabled = true;
@@ -528,8 +570,8 @@ P.customers = async (id) => {
     const nm = (pid) => (plans.plans.find(p => p.id === pid) || { name: pid }).name;
     prev.replaceChildren(
       h("div", { class: "timeline" },
-        h("div", { class: "old", style: `width:${pct}%` }, h("b", {}, nm(cr.metadata.plan_id)), `${served} days`),
-        h("div", { class: "new", style: `width:${100 - pct}%` }, h("b", {}, nm(m.plan_id)), `${m.remaining_days} days`)),
+        h("div", { class: "old grow", "data-w": `${pct}%` }, h("b", {}, nm(cr.metadata.plan_id)), `${served} days`),
+        h("div", { class: "new grow", "data-w": `${100 - pct}%` }, h("b", {}, nm(m.plan_id)), `${m.remaining_days} days`)),
       h("div", { class: "tl-axis" }, h("span", {}, day(iso(c.current_period_start))), h("span", {}, "changed " + day(done.period_start_iso)), h("span", {}, day(iso(c.current_period_end)))),
       h("table", { style: "margin-top:14px" },
         h("tr", {}, h("th", {}, "Settled on " + day(done.period_start_iso)), h("th", { class: "r" }, "Coefficient"), h("th", { class: "r" }, "Amount")),
@@ -580,10 +622,13 @@ P.pricing = async () => {
         h("td", { class: "r num" }, rs(t.flat_amount_paise))))),
       h("div", { class: "note", style: "margin-top:10px" }, h("b", {}, "Boundaries are inclusive: "), `exactly ${int(u.tiers[0].up_to_units)} units stays in Tier 1. 1 unit = ${int(u.divide_by)} tokens.`));
   }
+  let seq = 0, raf = 0;
+  const schedule = () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(() => run().catch(() => {})); };
   async function run() {
-    const u = usage.find(x => x.id === sel.value);
+    const u = usage.find(x => x.id === sel.value), my = ++seq;
     for (const b of seg.children) b.className = Number(b.dataset.v) === Number(tokens.value) ? "on" : "";
     const p = await api(`/v1/prices/${u.id}/preview?raw_units=${Math.max(0, Math.floor(Number(tokens.value) || 0))}`);
+    if (my !== seq) return;   // a newer slider position is already in flight
     const card = (mode, title, desc) => {
       const r = p[mode];
       return h("div", { class: "card", style: `border-top:4px solid ${mode === "slab" ? "var(--primary-c)" : "var(--line-2)"}` },
@@ -605,8 +650,8 @@ P.pricing = async () => {
         h("div", { class: "big num" }, rs(p.slab.amount_paise - p.volume.amount_paise))));
   }
   sel.onchange = () => { tiers(usage.find(x => x.id === sel.value)); run(); };
-  tokens.oninput = () => { slider.value = tokens.value; run(); };
-  slider.oninput = () => { tokens.value = slider.value; run(); };
+  tokens.oninput = () => { slider.value = tokens.value; schedule(); };
+  slider.oninput = () => { tokens.value = slider.value; schedule(); };
   tiers(usage[0]); run();
   return [
     h("div", { class: "titlerow" }, h("span", { class: "tag" }, "Killer Test 3"), h("span", { class: "tag green" }, "covered by tests/test_killer_3_tiered.py")),
@@ -685,7 +730,7 @@ P.spike = async () => {
     const ser = s.baseline_hourly_tokens ? await api(`/v1/usage/hourly?customer_id=${s.customer_id}&hours=168`) : null;
     const max = Math.max(s.current_hour_tokens, s.threshold_tokens, s.baseline_hourly_tokens, 1);
     const bar = (label, v, cls) => h("div", { class: "bar-row" }, h("span", { class: "sub" }, label),
-      h("div", { class: "track" }, h("div", { class: "fill " + cls, style: `width:${Math.min(100, v / max * 100)}%` })), h("span", { class: "num", style: "text-align:right" }, int(v)));
+      h("div", { class: "track" }, h("div", { class: "fill grow " + cls, "data-w": `${Math.min(100, v / max * 100)}%` })), h("span", { class: "num", style: "text-align:right" }, int(v)));
     const status = s.spike_detected ? h("span", { class: "tag red" }, `spike · ${s.ratio}×`)
       : s.reason === "insufficient_baseline" ? h("span", { class: "tag grey" }, "no baseline yet") : h("span", { class: "tag green" }, `normal · ${s.ratio}×`);
     return h("div", { class: "card", style: s.spike_detected ? "border-left:4px solid var(--red-strong)" : "" },
@@ -737,14 +782,24 @@ async function route() {
   const key = P[page] ? page : "overview";
   renderNav(key);
   const view = $("#view");
-  view.replaceChildren(h("div", { class: "empty" }, "Loading…"));
+  const samePage = view.dataset.page === location.hash;
+  view.dataset.page = location.hash;
+  view.setAttribute("aria-busy", "true");
+  if (!samePage) view.replaceChildren(h("div", { class: "skel", style: "height:28px;width:260px;margin-bottom:12px" }),
+    h("div", { class: "skel", style: "height:14px;width:480px;margin-bottom:22px" }),
+    h("div", { class: "grid g4" }, [0, 1, 2, 3].map(() => h("div", { class: "skel", style: "height:110px" }))),
+    h("div", { class: "skel", style: "height:280px;margin-top:18px" }));
   try {
     const kids = await P[key](arg ? decodeURIComponent(arg) : undefined);
+    view.classList.remove("enter");
     view.replaceChildren(...[kids].flat(Infinity).filter(Boolean));
+    if (!samePage) { void view.offsetWidth; view.classList.add("enter"); }
+    grow(view);
   } catch (e) {
     view.replaceChildren(h("div", { class: "card err" }, "Could not load: " + e.message));
   }
-  window.scrollTo(0, 0);
+  view.removeAttribute("aria-busy");
+  if (!samePage) window.scrollTo(0, 0);
   api("/v1/overview").then(o => {
     spikeCount = o.active_spikes.length; TENANT = o.tenant_id; renderNav(key);
     $("#tenant").textContent = "Tenant: " + o.tenant_id;
