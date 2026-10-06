@@ -60,12 +60,12 @@ SLIDES = [
     },
     {
         "kicker": "02 / OUR REBUILD",
-        "title": "A deterministic billing engine, built from docs/ alone",
+        "title": "Paise-Perfect: a billing engine built from docs/ alone",
         "lead": "Clean-room rebuild in Python 3 + FastAPI + SQLite. Zero external "
                 "infrastructure: no Postgres, no ClickHouse, no Redis, no Kafka, "
                 "no Temporal.",
         "arch": [
-            ("AI Gateway", "POST /v1/events"),
+            ("Clients", "AI gateway: POST /v1/events  |  /app dashboard over the same API"),
             ("Ingestion", "atomic insert; UNIQUE(tenant_id, event_id) is the "
                           "dedup arbiter"),
             ("Meters", "half-open windows; SUM / COUNT / COUNT_UNIQUE; "
@@ -81,7 +81,7 @@ SLIDES = [
              "rounding happens exactly once, at the invoice line."),
             ("Time is injectable.", "Nothing calls datetime.now(). BILLING_NOW "
              "from .env drives the clock, so a 30-day cycle and a Day-15 upgrade "
-             "are simulated in milliseconds - the whole suite runs in ~1 second."),
+             "are simulated in milliseconds - the whole suite runs in ~2 seconds."),
             ("Durability before acknowledgement.", "HTTP 201 is returned only "
              "after the row is committed. No fire-and-forget broker to lose it."),
         ],
@@ -113,8 +113,8 @@ SLIDES = [
               "     =                                14,000 paise = Rs 140.00",
               "VOLUME: 1,500 x Rs 0.05 + Rs 10.00 =   8,500 paise = Rs  85.00"]),
         ],
-        "status": "pytest: 35 passed  -  16 Killer Test cases, 7 Fix, 12 "
-                  "Differentiator",
+        "status": "pytest: 41 passed  -  16 Killer Test cases, 7 Fix, "
+                  "14 Differentiator, 4 Dashboard",
         "footer": "Edge cases pinned too: exact tier boundary stays in Tier 1; "
                   "Day-1 and Day-30 upgrades; aggregate-then-tier.",
     },
@@ -169,27 +169,29 @@ SLIDES = [
                 ],
             },
         ],
-        "footer": "No other gaps were touched. Full pytest run after each "
-                  "improvement; the Killer Tests never broke.",
+        "footer": "Both are on screen in the /app dashboard (explainer page, red "
+                  "spike banner, live \"simulate a runaway loop\"). Killer Tests "
+                  "never broke.",
     },
     {
         "kicker": "05 / DEMO & RESULTS",
-        "title": "Everything runs from two commands",
+        "title": "Run it locally - or open it live",
         "code": [
             "python3 -m venv venv && ./venv/bin/pip install -r requirements.txt",
             "cp .env.example .env",
-            "",
-            "./venv/bin/python -m pytest -q      # 35 passed in ~1s",
+            "./venv/bin/python -m pytest -q      # 41 passed in ~2s",
             "./scripts/demo                      # 67 live checks, all PASS",
+            "./scripts/ui                        # dashboard: 127.0.0.1:8000/app",
+            r"Windows: venv\Scripts\python -m pytest -q  |  scripts\demo  |  scripts\ui",
         ],
         "lead": "scripts/demo boots a real uvicorn server on a throwaway SQLite "
                 "file and drives it over HTTP, printing every request with the "
                 "EXPECTED value quoted from docs/PRD.md beside the ACTUAL "
                 "response.",
         "results": [
-            ("35", "pytest cases passing", "16 Killer / 7 Fix / 12 Differentiator"),
+            ("41", "pytest cases passing", "16 Killer/7 Fix/14 Diff/4 UI"),
             ("67", "live demo checks", "every one PASS"),
-            ("~1s", "full suite runtime", "BILLING_NOW, no sleeps"),
+            ("~2s", "full suite runtime", "BILLING_NOW, no sleeps"),
             ("0", "external services", "SQLite only"),
         ],
         "verified": [
@@ -200,8 +202,8 @@ SLIDES = [
             "Invoice explanation returns 200 with no AI key configured",
             "Runaway loop flagged at 10.00x the 7-day baseline",
         ],
-        "footer": "No secrets in git: .env, venv/, node_modules/ and *.db are "
-                  "gitignored; .env.example carries names only.",
+        "footer": "Live preview: https://paise-perfect.vercel.app  |  No secrets "
+                  "in git: .env and *.db are gitignored.",
     },
 ]
 
@@ -235,7 +237,7 @@ def chrome(c, slide, index):
     c.setFillColor(MUTED)
     c.setFont("Helvetica", 8.5)
     c.drawRightString(W - MARGIN, H - 0.62 * inch,
-                      "Core Billing Engine  |  Team Encode  |  DBG-136")
+                      "Paise-Perfect  |  Team Encode  |  DBG-136")
 
     c.setFillColor(INK)
     c.setFont("Helvetica-Bold", 20)
@@ -445,13 +447,14 @@ def slide_4(c, s, i):
 
 def slide_5(c, s, i):
     y = chrome(c, s, i)
-    code_h = 1.12 * inch
+    code_h = 1.3 * inch
     c.setFillColor(INK)
     c.rect(MARGIN, y - code_h, W - 2 * MARGIN, code_h, stroke=0, fill=1)
     yy = y - 0.2 * inch
     for ln in s["code"]:
         c.setFillColor(colors.HexColor("#8FE3B0") if ln.startswith("./venv/bin/python -m")
-                       or ln.startswith("./scripts") else colors.white)
+                       or ln.startswith("./scripts") else
+                       colors.HexColor("#B9C4DA") if ln.startswith("Windows") else colors.white)
         c.setFont("Courier-Bold", 9)
         c.drawString(MARGIN + 12, yy, ln)
         yy -= 12.5
@@ -494,7 +497,7 @@ def slide_5(c, s, i):
 
 def main():
     c = canvas.Canvas(str(OUT), pagesize=PAGE)
-    c.setTitle("Core Billing Engine - Team Encode (DBG-136)")
+    c.setTitle("Paise-Perfect - Team Encode (DBG-136)")
     c.setAuthor("Team Encode")
     c.setSubject("Usage-Based Billing Engine - clean-room rebuild from docs/")
     for n, (slide, fn) in enumerate(
