@@ -268,15 +268,6 @@ names and comments only.
 
 Found in our own review and stated here rather than left for a reviewer to find:
 
-* **Late events into a sealed period are accepted but not re-billed.** Ingestion
-  rejects timestamps older than `MAX_PAST_DRIFT_DAYS` (30), not older than the start
-  of the open billing period, so an event dated inside an already-finalized period
-  returns `201` and is counted by the meter, but the sealed invoice is immutable and
-  idempotent and does not change. `docs/PRD.md` section 4 (Should Have, "Strict Timestamp Drift
-  Validation") asks for rejection beyond the active billing window; closing this means checking the event's period against
-  finalized invoices at ingest.
-* **Fractional token counts are truncated.** `properties.total_tokens = 1.7` is
-  stored as `1`; non-integer values should be rejected with `400` instead.
 * **The engine allows several plan changes in one period.** Each is prorated from
   the then-current plan; the dashboard shows one change per period.
 * **The hosted preview is per-instance.** See the note under the live-demo link.

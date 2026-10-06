@@ -45,6 +45,12 @@ def _extract_quantity(properties: dict, event_name: str, tenant_id: str) -> int:
                 # GAPS.md gap 4: upstream silently coerced negatives to zero,
                 # hiding malformed input. Reject loudly instead.
                 raise IngestionError(400, f"properties.{prop} must not be negative")
+            if isinstance(value, float) and not value.is_integer():
+                # Same class of bug as gap 4, and the one we criticise upstream
+                # for: int(1.7) would silently store 1 and bill 0.7 fewer tokens
+                # with no error. A token count is a whole number; 1.0 is fine.
+                raise IngestionError(
+                    400, f"properties.{prop} must be a whole number")
             return int(value)
     return 0
 
@@ -77,6 +83,25 @@ def validate_timestamp(ts: int) -> None:
         )
 
 
+def finalized_period_for(tenant_id: str, customer_id: str, ts: int):
+    """The sealed cycle period containing `ts`, or None.
+
+    A `subscription_cycle` invoice that is `finalized` is immutable and
+    idempotent: regenerating it returns the stored invoice rather than
+    recomputing usage. An event dated inside such a period therefore can never
+    be billed, so accepting it would silently drop revenue (GAPS.md gap 3 --
+    "events dated months in the past land in sealed, immutable invoice periods
+    and are never billed"). Periods are half-open: start <= ts < end.
+    """
+    return database.fetch_one(
+        "SELECT period_start, period_end FROM invoices "
+        "WHERE tenant_id = ? AND customer_id = ? "
+        "AND invoice_type = 'subscription_cycle' AND status = 'finalized' "
+        "AND period_start <= ? AND ? < period_end "
+        "ORDER BY period_start LIMIT 1",
+        (tenant_id, customer_id, ts, ts))
+
+
 def ingest(tenant_id: str, payload: dict) -> tuple[int, dict]:
     """Returns (http_status, body). 201 on first write, 200 on duplicate."""
     event_id = (payload.get("event_id") or "").strip()
@@ -104,6 +129,30 @@ def ingest(tenant_id: str, payload: dict) -> tuple[int, dict]:
             "SELECT 1 FROM customers WHERE tenant_id = ? AND id = ?",
             (tenant_id, customer_id)):
         raise IngestionError(404, f"customer_id {customer_id} does not exist")
+
+    # Deduplication is answered FIRST and is unchanged by the sealed-period gate
+    # below: a replayed event_id is idempotent, records nothing new, and must
+    # still return 200 even if its period has since been finalized. This is a
+    # fast path only -- the atomic INSERT further down remains the real arbiter,
+    # so the concurrent-writer guarantee is untouched.
+    if database.fetch_one(
+            "SELECT 1 FROM usage_events WHERE tenant_id = ? AND event_id = ?",
+            (tenant_id, event_id)):
+        return 200, {
+            "status": "duplicate_skipped",
+            "event_id": event_id,
+            "message": "Event previously processed; duplicate ignored",
+        }
+
+    # Reject NEW usage aimed at an already-sealed billing period.
+    sealed = finalized_period_for(tenant_id, customer_id, ts)
+    if sealed is not None:
+        raise IngestionError(
+            409,
+            f"timestamp {btime.to_iso(ts)} falls in finalized billing period "
+            f"{btime.to_iso(sealed['period_start'])}.."
+            f"{btime.to_iso(sealed['period_end'])}",
+        )
 
     quantity = _extract_quantity(properties, event_name, tenant_id)
     now = btime.now()
