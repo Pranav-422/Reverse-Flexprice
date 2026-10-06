@@ -1,0 +1,10 @@
+# Not needed to serve the app (and flexprice/ is the upstream clone).
+flexprice/
+venv/
+.venv/
+tests/
+docs/
+deck.pdf
+scripts/
+*.db
+.env
